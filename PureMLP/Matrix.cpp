@@ -33,6 +33,31 @@ Matrix::Matrix(unsigned int rows, unsigned int cols, bool initRandom) : rows(row
 	}
 }
 
+
+/*
+Copy c'tor
+Receives:
+	const ref to another matrix
+
+Performs a deep copy of the recieved matrix and assigns it to the object 
+on which it was called on
+*/
+Matrix::Matrix(const Matrix& mat) : rows(mat.rows), columns(mat.columns)
+{
+	
+	double** copiedMat = new double*[this->rows];
+
+	// perform a deep copy of the received matrix
+	for (int i = 0; i < this->rows; ++i)
+	{
+		copiedMat[i] = new double[this->columns];
+		for (int j = 0; j < this->columns; ++j)
+			copiedMat[i][j] = mat[i][j];
+	}
+
+	this->matrix = copiedMat;
+}
+
 /*
 Transposes the matrix
 Creates new matrix size of columns x rows 
@@ -57,11 +82,12 @@ void Matrix::transpose()
 	matrix = matT;
 }
 
-double** Matrix::transpose(const Matrix& mat)
+Matrix Matrix::transpose(const Matrix& mat)
 {
 	int matTrows, matTcolumns;
 	matTrows = mat.getColumns();
 	matTcolumns = mat.getRows();
+
 
 	double** matT = new double* [matTrows];
 	for (int i = 0; i < matTrows; ++i)
@@ -71,7 +97,7 @@ double** Matrix::transpose(const Matrix& mat)
 			matT[i][j] = mat[j][i];
 	}
 
-	return matT;
+	return Matrix(matTrows, matTcolumns, matT);
 }
 
 
@@ -98,35 +124,41 @@ void Matrix::operator+(const Matrix& matToAdd)
 			for (int j = 0; j < columns; ++j)
 				matrix[i][j] += matToAdd[0][j];
 	}
+	else
+		throw -1;
 	/*
 	TODO:
 		handle exeption
 	*/
-
-
 }
 
 
-double** operator+(const Matrix& mat1, const Matrix& mat2)
+Matrix operator+(const Matrix& mat1, const Matrix& mat2)
 {
 	double** outputMat = nullptr;
+	int newRows, newCols;
 	//Matrixes are the same size
 	if (mat1.rows == mat2.rows and mat1.columns == mat2.columns)
 	{
-		outputMat = new double*[mat1.rows];
-		for (int i = 0; i < mat1.rows; ++i)
+		newRows = mat1.rows;
+		newCols = mat1.columns;
+
+		outputMat = new double*[newRows];
+		for (int i = 0; i < newRows; ++i)
 		{
-			outputMat[i] = new double[mat1.columns];
-			for (int j = 0; j < mat1.columns; ++j)
+			outputMat[i] = new double[newCols];
+			for (int j = 0; j < newCols; ++j)
 				outputMat[i][j] = mat1[i][j] + mat2[i][j];
 		}
 	}
-	else if ((mat1.rows == 1 or mat2.rows == 1) and mat1.columns == mat2.columns)
+
+	else if ((mat1.rows == 1 or mat2.rows == 1) and mat1.columns == mat2.columns) // matrix and row vector
 	{
+
 		int rows = mat1.rows !=  1 ? mat1.rows : mat2.rows;
 		int columns = mat1.columns;
 
-		const double* columnVector = mat1.rows == 1 ? mat1[0] : mat2[0];
+		const double* rowVector = mat1.rows == 1 ? mat1[0] : mat2[0];
 		double** matrix = mat1.rows == 1 ? mat2.getMatrix() : mat1.getMatrix();
 
 		outputMat = new double* [rows];
@@ -134,16 +166,62 @@ double** operator+(const Matrix& mat1, const Matrix& mat2)
 		{
 			outputMat[i] = new double[columns];
 			for (int j = 0; j < columns; ++j)
-				outputMat[i][j] = matrix[i][j] + columnVector[j];
+				outputMat[i][j] = matrix[i][j] + rowVector[j];
 		}
 			
 	}
-	
-		
-	
+	else if ((mat1.columns == 1 or mat2.columns == 1) and mat1.rows == mat2.rows) // matrix and column vector
+	{
 
-	return outputMat;
+		int columns = mat1.columns == 1 ? mat2.columns : mat1.columns;
+		int rows = mat1.rows;
+
+		const double** columnVector = mat1.columns == 1 ? mat1.getMatrix() : mat2.getMatrix();
+		double** matrix = mat1.columns == 1 ? mat2.getMatrix() : mat1.getMatrix();
+
+		outputMat = new double* [rows];
+		for (int i = 0; i < rows; ++i)
+		{
+			outputMat[i] = new double[columns];
+			for (int j = 0; j < columns; ++j)
+				outputMat[i][j] = matrix[i][j] + columnVector[j][0];
+		}
+
+	}
+	else {
+		// TODO:
+			// throw and exception
+		throw - 1;
+		}
+
+	return Matrix(newRows, newCols, outputMat);
 }
+
+
+Matrix& Matrix::operator=(const Matrix& mat)
+{
+	if (this == &mat)
+		return *this;
+
+	freeMatrix(*this);
+	this->rows = mat.rows;
+	this->columns = mat.columns;
+
+	double** copiedMat = new double* [this->rows];
+
+	// perform a deep copy of the received matrix
+	for (int i = 0; i < this->rows; ++i)
+	{
+		copiedMat[i] = new double[this->columns];
+		for (int j = 0; j < this->columns; ++j)
+			copiedMat[i][j] = mat[i][j];
+	}
+
+	this->matrix = copiedMat;
+
+	return *this;
+}
+
 
 // ==================== End of Operators ====================
 

@@ -8,9 +8,15 @@ int main()
 {
 	initSeed();
 	Matrix mat(4, 3, true);
-	Matrix mat1(4, 3, true);
+	Matrix mat1(3, 10, true);
 	mat.printMat();
-	std::cout << "\n\n" <<  mat[2][0] ;
+	std::cout << "\n\n";
+	mat1.printMat();
+	std::cout << "\n\n";
+	Matrix matMul = mat * mat1;
+	matMul.printMat();
+
+	std::cout << "\n\n";
 	/*
 	std::cout << "\n\n";
 	mat1.printMat();

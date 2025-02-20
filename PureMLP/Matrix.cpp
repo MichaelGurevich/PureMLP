@@ -16,14 +16,19 @@ bool initRandom:
 Matrix::Matrix(unsigned int rows, unsigned int cols, bool initRandom) : rows(rows), columns(cols)
 {
 	matrix = new double*[rows]; // Create new matrix size of rows x columns
-
+	int sum = 0;
 	if (initRandom)  // if init random is true
 	{
 		for (int i = 0; i < rows; ++i)
 		{
 			matrix[i] = new double[columns]; // create columns for each rows
 			for (int j = 0; j < columns; ++j)
-				matrix[i][j] = getRandomNumber(-1, 1); // get random number for each entry in the matrix
+			{
+				//matrix[i][j] = getRandomNumber(-1, 1); // get random number for each entry in the matrix
+				matrix[i][j] = sum++;
+			}
+				
+				
 		}
 	}
 	else // otherwise, init the matrix with random numbers
@@ -103,35 +108,15 @@ Matrix Matrix::transpose(const Matrix& mat)
 
 // ==================== Operators ====================
 
-void Matrix::operator+(const Matrix& matToAdd)
-{
+/*
+Operator +
+	Receives: reference to matrices
+	
+	Returns: new matrix which is the sum
 
-	if (matToAdd.getRows() == rows and matToAdd.getColumns() == columns) // if matrixes are of the same size
-	{
-		for (int i = 0; i < rows; ++i)
-			for (int j = 0; j < columns; ++j)
-				matrix[i][j] += matToAdd[i][j];
-	}
-	else if (matToAdd.getRows() == rows and matToAdd.getColumns() == 1) // if the matrix is a column vector matrix, add the vector to each column
-	{
-		for (int i = 0; i < rows; ++i)
-			for (int j = 0; j < columns; ++j)
-				matrix[i][j] += matToAdd[i][0];
-	}
-	else if (matToAdd.getColumns() == columns and matToAdd.getRows() == 1) // if the matrix a row vector matrix, add the vector to each row
-	{
-		for (int i = 0; i < rows; ++i)
-			for (int j = 0; j < columns; ++j)
-				matrix[i][j] += matToAdd[0][j];
-	}
-	else
-		throw -1;
-	/*
-	TODO:
-		handle exeption
-	*/
-}
-
+	If matrices are equal in size then adds element wise
+	If matrix and vector (n x 1 / 1 x n) is recieved -> broadcasts the vector thru the matrix columns/rows
+*/
 
 Matrix operator+(const Matrix& mat1, const Matrix& mat2)
 {
@@ -152,7 +137,7 @@ Matrix operator+(const Matrix& mat1, const Matrix& mat2)
 		}
 	}
 
-	else if ((mat1.rows == 1 or mat2.rows == 1) and mat1.columns == mat2.columns) // matrix and row vector
+	else if ((mat1.rows == 1 or mat2.rows == 1) and mat1.columns == mat2.columns) // matrix and row vector -> broadcast the vector 
 	{
 
 		int rows = mat1.rows !=  1 ? mat1.rows : mat2.rows;
@@ -170,13 +155,13 @@ Matrix operator+(const Matrix& mat1, const Matrix& mat2)
 		}
 			
 	}
-	else if ((mat1.columns == 1 or mat2.columns == 1) and mat1.rows == mat2.rows) // matrix and column vector
+	else if ((mat1.columns == 1 or mat2.columns == 1) and mat1.rows == mat2.rows) // matrix and column vector -> broadcast the vector
 	{
 
 		int columns = mat1.columns == 1 ? mat2.columns : mat1.columns;
 		int rows = mat1.rows;
 
-		const double** columnVector = mat1.columns == 1 ? mat1.getMatrix() : mat2.getMatrix();
+		double** columnVector = mat1.columns == 1 ? mat1.getMatrix() : mat2.getMatrix();
 		double** matrix = mat1.columns == 1 ? mat2.getMatrix() : mat1.getMatrix();
 
 		outputMat = new double* [rows];
@@ -198,6 +183,13 @@ Matrix operator+(const Matrix& mat1, const Matrix& mat2)
 }
 
 
+/*
+Operator =
+
+Receives: referece to a matrix
+Updates the matrix on which the operator was called on 
+Returns a ref to the left hand matrix
+*/
 Matrix& Matrix::operator=(const Matrix& mat)
 {
 	if (this == &mat)
@@ -223,6 +215,51 @@ Matrix& Matrix::operator=(const Matrix& mat)
 }
 
 
+
+
+Matrix operator*(const Matrix& mat1, const Matrix& mat2)
+{
+	int mat1Rows, mat1Cols, mat2Rows, mat2Cols, matMulRows, matMulCols;
+	double** mat1mat, **mat2mat;
+
+	mat1Rows = mat1.getRows();
+	mat2Rows = mat2.getRows();
+	mat1Cols = mat1.getColumns();
+	mat2Cols = mat2.getColumns();
+
+	mat1mat = mat1.getMatrix();
+	mat2mat = mat2.getMatrix();
+
+	matMulRows = mat1Rows;
+	matMulCols = mat2Cols;
+
+
+	double** matMul = new double* [matMulRows];
+
+	if (mat1Cols == mat2Rows)
+	{
+		for (int i = 0; i < mat1Rows; ++i)
+		{
+			matMul[i] = new double[matMulCols];
+			for (int j = 0; j < mat2Cols; ++j)
+			{
+				double sum = 0;
+				for (int k = 0; k < mat1Cols; ++k)
+				{
+					sum += mat1mat[i][k] * mat2mat[k][j];
+				}
+				matMul[i][j] = sum;
+			}
+		}
+
+		return Matrix(matMulRows, matMulCols, matMul);
+	} 
+
+	// TODO:
+		// Handle exception
+	throw - 1;
+
+}
 // ==================== End of Operators ====================
 
 void Matrix::printMat()

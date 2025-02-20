@@ -14,7 +14,7 @@ private:
 public:
 	Matrix(unsigned int rows = 0, unsigned int cols = 0, bool initRandom = false); // c.tor, the initRandom flag is to whether to init the matrix with random numbers
 	Matrix() : rows(0), columns(0), matrix(nullptr) {} // empty c'tor
-	Matrix(unsigned int rows = 0, unsigned int cols = 0, double** matrix) : rows(rows), columns(cols), matrix(matrix) {} 
+	Matrix(unsigned int rows = 0, unsigned int cols = 0, double** matrix=nullptr) : rows(rows), columns(cols), matrix(matrix) {} 
 
 	Matrix(const Matrix& mat); // copy c'tor
 	
@@ -25,10 +25,10 @@ public:
 	
 
 	// Operators
-	void operator+(const Matrix& matToAdd);
 	friend Matrix operator+(const Matrix& mat1, const Matrix& mat2);
 	const double* operator[](unsigned int index) const { return matrix[index]; }
 	Matrix& operator=(const Matrix& mat);
+	friend Matrix operator*(const Matrix& mat1, const Matrix& mat2);
 	
 	
 

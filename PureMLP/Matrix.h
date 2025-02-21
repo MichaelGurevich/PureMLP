@@ -24,7 +24,6 @@ private:
 
 public:
 	Matrix(unsigned int rows = 0, unsigned int cols = 0, bool initRandom=false); // c.tor, the initRandom flag is to whether to init the matrix with random numbers
-	//Matrix() : rows(0), columns(0), matrix(nullptr) {} // empty c'tor
 	Matrix(unsigned int rows, unsigned int cols, double** matrix) : rows(rows), columns(cols), matrix(matrix) {} 
 
 	Matrix(Matrix&& mat) noexcept; // move c'tor
@@ -32,8 +31,6 @@ public:
 	Matrix(const Matrix& mat); // copy c'tor
 	
 	~Matrix() { freeMatrix(*this); } // d'tor
-
-	
 
 	// Operators
 		// + operator

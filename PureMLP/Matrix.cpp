@@ -15,27 +15,39 @@ bool initRandom:
 */
 Matrix::Matrix(unsigned int rows, unsigned int cols, bool initRandom) : rows(rows), columns(cols)
 {
-	matrix = new double*[rows]; // Create new matrix size of rows x columns
-	int sum = 0;
-	if (initRandom)  // if init random is true
+	if (rows == 0 and cols == 0) // empty c'tor
 	{
-		for (int i = 0; i < rows; ++i)
+		matrix = nullptr;
+	} 
+	else if ( rows == 0 or cols == 0) // illegal input
+	{
+		throw - 1;
+	}
+	else
+	{
+		matrix = new double* [rows]; // Create new matrix size of rows x columns
+		int sum = 0;
+		if (initRandom)  // if init random is true
 		{
-			matrix[i] = new double[columns]; // create columns for each rows
-			for (int j = 0; j < columns; ++j)
+			for (int i = 0; i < rows; ++i)
 			{
-				//matrix[i][j] = getRandomNumber(-1, 1); // get random number for each entry in the matrix
-				matrix[i][j] = sum++;
+				matrix[i] = new double[columns]; // create columns for each rows
+				for (int j = 0; j < columns; ++j)
+				{
+					//matrix[i][j] = getRandomNumber(-1, 1); // get random number for each entry in the matrix
+					matrix[i][j] = sum++;
+				}
+
+
 			}
-				
-				
+		}
+		else // otherwise, init the matrix with random numbers
+		{
+			for (int i = 0; i < rows; ++i)
+				matrix[i] = new double[columns] {0};
 		}
 	}
-	else // otherwise, init the matrix with random numbers
-	{
-		for (int i = 0; i < rows; ++i)
-			matrix[i] = new double[columns] {0};
-	}
+	
 }
 
 

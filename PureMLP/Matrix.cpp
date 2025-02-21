@@ -63,6 +63,20 @@ Matrix::Matrix(const Matrix& mat) : rows(mat.rows), columns(mat.columns)
 	this->matrix = copiedMat;
 }
 
+Matrix::Matrix(Matrix&& mat) noexcept
+	:matrix(nullptr), rows(0), columns(0) // 
+{
+	// "Steal" attributes of the rvalue mat
+	this->matrix = mat.matrix;
+	this->rows = mat.rows;
+	this->columns = mat.columns;
+
+	// Nullify the rvalue mat
+	mat.matrix = nullptr;
+	mat.rows = 0;
+	mat.columns = 0;
+}
+
 /*
 Transposes the matrix
 Creates new matrix size of columns x rows 
@@ -183,6 +197,24 @@ Matrix operator+(const Matrix& mat1, const Matrix& mat2)
 }
 
 
+Matrix& Matrix::operator+=(double scalar)
+{
+	for (int i = 0; i < this->rows; ++i)
+		for (int j = 0; j < this->columns; ++j)
+			this->matrix[i][j] + scalar;
+	
+	return *this;
+}
+
+
+Matrix& Matrix::operator+=(const Matrix& mat)
+{
+	for (int i = 0; i < this->rows; ++i)
+		for (int j = 0; j < this->columns; ++j)
+			this->matrix[i][j] + mat.matrix[i][j];
+	return *this;
+}
+
 /*
 Operator =
 
@@ -214,7 +246,26 @@ Matrix& Matrix::operator=(const Matrix& mat)
 	return *this;
 }
 
+Matrix& Matrix::operator=(Matrix&& mat) noexcept
+{
+	if (this == &mat)
+		return *this;
 
+	Matrix::freeMatrix(*this);
+	
+	// "Steal" attributes of the rvalue mat
+	this->matrix = mat.matrix;
+	this->rows = mat.rows;
+	this->columns = mat.columns;
+
+	// Nullify the rvalue mat
+	mat.matrix = nullptr;
+	mat.rows = 0;
+	mat.columns = 0;
+
+	return *this;
+
+}
 
 
 Matrix operator*(const Matrix& mat1, const Matrix& mat2)
@@ -271,7 +322,7 @@ void Matrix::printMat()
 		{
 			if (matrix[i][j] >= 0)
 				std::cout << " ";
-			std::cout << matrix[i][j] << " ";
+			std::cout << std::setw(5) << std::left << matrix[i][j] << " ";
 		}
 		std::cout << std::endl;
 	}
@@ -284,4 +335,25 @@ void Matrix::freeMatrix(Matrix& mat)
 	for (int i = 0; i < mat.getRows(); ++i)
 		delete[]mat.getMatrix()[i];
 	delete mat.getMatrix();
+}
+
+Matrix Matrix::applyScalarOperation(const Matrix& mat, double scalar, std::function<double(double, double)> op)
+{
+	unsigned int matRows, matCols;
+
+	matRows = mat.getRows();
+	matCols = mat.getColumns();
+
+	double** newMat = new double* [matRows];
+	double** matMat = mat.getMatrix();
+	for (int i = 0; i < matRows; ++i)
+	{
+		newMat[i] = new double[matCols];
+		for (int j = 0; j < matCols; ++j)
+		{
+			newMat[i][j] =  op(matMat[i][j], scalar);
+		}
+	}
+
+	return Matrix(matRows, matCols, newMat);
 }

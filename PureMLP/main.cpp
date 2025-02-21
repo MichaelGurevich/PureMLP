@@ -8,12 +8,12 @@ int main()
 {
 	initSeed();
 	Matrix mat(4, 3, true);
-	Matrix mat1(3, 10, true);
-	mat.printMat();
-	std::cout << "\n\n";
+	Matrix mat1(3, 4, true);
+	//mat.printMat();
+	//std::cout << "\n\n";
 	mat1.printMat();
 	std::cout << "\n\n";
-	Matrix matMul = mat * mat1;
+	Matrix matMul = 3 + mat1 + 3;
 	matMul.printMat();
 
 	std::cout << "\n\n";

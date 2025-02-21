@@ -122,98 +122,37 @@ Matrix Matrix::transpose(const Matrix& mat)
 
 // ==================== Operators ====================
 
-/*
-Operator +
-	Receives: reference to matrices
-	
-	Returns: new matrix which is the sum
 
-	If matrices are equal in size then adds element wise
-	If matrix and vector (n x 1 / 1 x n) is recieved -> broadcasts the vector thru the matrix columns/rows
-*/
-
-Matrix operator+(const Matrix& mat1, const Matrix& mat2)
-{
-	double** outputMat = nullptr;
-	int newRows, newCols;
-	//Matrixes are the same size
-	if (mat1.rows == mat2.rows and mat1.columns == mat2.columns)
-	{
-		newRows = mat1.rows;
-		newCols = mat1.columns;
-
-		outputMat = new double*[newRows];
-		for (int i = 0; i < newRows; ++i)
-		{
-			outputMat[i] = new double[newCols];
-			for (int j = 0; j < newCols; ++j)
-				outputMat[i][j] = mat1[i][j] + mat2[i][j];
-		}
-	}
-
-	else if ((mat1.rows == 1 or mat2.rows == 1) and mat1.columns == mat2.columns) // matrix and row vector -> broadcast the vector 
-	{
-
-		int rows = mat1.rows !=  1 ? mat1.rows : mat2.rows;
-		int columns = mat1.columns;
-
-		const double* rowVector = mat1.rows == 1 ? mat1[0] : mat2[0];
-		double** matrix = mat1.rows == 1 ? mat2.getMatrix() : mat1.getMatrix();
-
-		outputMat = new double* [rows];
-		for (int i = 0; i < rows; ++i)
-		{
-			outputMat[i] = new double[columns];
-			for (int j = 0; j < columns; ++j)
-				outputMat[i][j] = matrix[i][j] + rowVector[j];
-		}
-			
-	}
-	else if ((mat1.columns == 1 or mat2.columns == 1) and mat1.rows == mat2.rows) // matrix and column vector -> broadcast the vector
-	{
-
-		int columns = mat1.columns == 1 ? mat2.columns : mat1.columns;
-		int rows = mat1.rows;
-
-		double** columnVector = mat1.columns == 1 ? mat1.getMatrix() : mat2.getMatrix();
-		double** matrix = mat1.columns == 1 ? mat2.getMatrix() : mat1.getMatrix();
-
-		outputMat = new double* [rows];
-		for (int i = 0; i < rows; ++i)
-		{
-			outputMat[i] = new double[columns];
-			for (int j = 0; j < columns; ++j)
-				outputMat[i][j] = matrix[i][j] + columnVector[j][0];
-		}
-
-	}
-	else {
-		// TODO:
-			// throw and exception
-		throw - 1;
-		}
-
-	return Matrix(newRows, newCols, outputMat);
-}
-
-
+	// Operator +
 Matrix& Matrix::operator+=(double scalar)
 {
-	for (int i = 0; i < this->rows; ++i)
-		for (int j = 0; j < this->columns; ++j)
-			this->matrix[i][j] + scalar;
-	
+	this->applyScalarOperation(scalar, Matrix::addtion);
 	return *this;
+
 }
 
 
 Matrix& Matrix::operator+=(const Matrix& mat)
 {
-	for (int i = 0; i < this->rows; ++i)
-		for (int j = 0; j < this->columns; ++j)
-			this->matrix[i][j] + mat.matrix[i][j];
+	this->linearOperation(mat, Matrix::addtion);
 	return *this;
 }
+
+
+	// Operator -
+Matrix& Matrix::operator-=(double scalar)
+{
+	this->applyScalarOperation(scalar, Matrix::subraction);
+	return *this;
+}
+
+
+Matrix& Matrix::operator-=(const Matrix& mat)
+{
+	this->linearOperation(mat, Matrix::subraction);
+	return *this;
+}
+
 
 /*
 Operator =
@@ -295,7 +234,7 @@ Matrix operator*(const Matrix& mat1, const Matrix& mat2)
 			for (int j = 0; j < mat2Cols; ++j)
 			{
 				double sum = 0;
-				for (int k = 0; k < mat1Cols; ++k)
+				for (int k = 0; k < mat2Rows; ++k)
 				{
 					sum += mat1mat[i][k] * mat2mat[k][j];
 				}
@@ -309,8 +248,47 @@ Matrix operator*(const Matrix& mat1, const Matrix& mat2)
 	// TODO:
 		// Handle exception
 	throw - 1;
-
 }
+
+Matrix& Matrix::operator*=(const Matrix& mat)
+{	
+
+	double** matMul = new double* [this->rows];
+
+	if (this->columns == mat.rows)
+	{
+		for (int i = 0; i < this->rows; ++i)
+		{
+			matMul[i] = new double[mat.columns];
+			for (int j = 0; j < mat.columns; ++j)
+			{
+				double sum = 0;
+				for (int k = 0; k < mat.rows; ++k)
+				{
+					sum += this->matrix[i][k] * mat.matrix[k][j];
+				}
+				matMul[i][j] = sum;
+			}
+		}
+
+		freeMatrix(*this); // delete previous matrix
+
+		this->columns = mat.columns;
+		this->matrix = matMul; // update matrix to the multiplied matrix
+		return *this;
+	}
+
+	// TODO:
+		// Handle exception
+	throw - 1;
+}
+
+Matrix& Matrix::operator*=(double scalar)
+{
+	this->applyScalarOperation(scalar, Matrix::multiplication);
+	return *this;
+}
+
 // ==================== End of Operators ====================
 
 void Matrix::printMat()
@@ -356,4 +334,142 @@ Matrix Matrix::applyScalarOperation(const Matrix& mat, double scalar, std::funct
 	}
 
 	return Matrix(matRows, matCols, newMat);
+}
+
+
+/*
+For use in operaton +/- between to matrices
+	Receives: reference to matrices
+
+	Returns: new matrix which is the sum/subtraction
+
+	If matrices are equal in size then adds element wise
+	If matrix and vector (n x 1 / 1 x n) is recieved -> broadcasts the vector thru the matrix columns/rows
+*/
+Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::function<double(double, double)> op)
+{
+	double** outputMat = nullptr;
+	int newRows, newCols;
+	//Matrixes are the same size
+	if (mat1.rows == mat2.rows and mat1.columns == mat2.columns)
+	{
+		newRows = mat1.rows;
+		newCols = mat1.columns;
+
+		outputMat = new double* [newRows];
+		for (int i = 0; i < newRows; ++i)
+		{
+			outputMat[i] = new double[newCols];
+			for (int j = 0; j < newCols; ++j)
+				outputMat[i][j] = op(mat1[i][j], mat2[i][j]);
+		}
+	}
+
+	else if ((mat1.rows == 1 or mat2.rows == 1) and mat1.columns == mat2.columns) // matrix and row vector -> broadcast the vector 
+	{
+
+		int rows = mat1.rows != 1 ? mat1.rows : mat2.rows;
+		int columns = mat1.columns;
+
+		const double* rowVector = mat1.rows == 1 ? mat1[0] : mat2[0];
+		double** matrix = mat1.rows == 1 ? mat2.getMatrix() : mat1.getMatrix();
+
+		outputMat = new double* [rows];
+		for (int i = 0; i < rows; ++i)
+		{
+			outputMat[i] = new double[columns];
+			for (int j = 0; j < columns; ++j)
+				outputMat[i][j] = op(matrix[i][j], rowVector[j]);
+		}
+
+	}
+	else if ((mat1.columns == 1 or mat2.columns == 1) and mat1.rows == mat2.rows) // matrix and column vector -> broadcast the vector
+	{
+
+		int columns = mat1.columns == 1 ? mat2.columns : mat1.columns;
+		int rows = mat1.rows;
+
+		double** columnVector = mat1.columns == 1 ? mat1.getMatrix() : mat2.getMatrix();
+		double** matrix = mat1.columns == 1 ? mat2.getMatrix() : mat1.getMatrix();
+
+		outputMat = new double* [rows];
+		for (int i = 0; i < columns; ++i)
+		{
+			outputMat[i] = new double[columns];
+			for (int j = 0; j < rows; ++j)
+				outputMat[i][j] = op(matrix[j][i], columnVector[j][0]);
+		}
+
+	}
+	else {
+		// TODO:
+			// throw and exception
+		throw - 1;
+	}
+
+	return Matrix(newRows, newCols, outputMat);
+}
+
+
+void Matrix::linearOperation(const Matrix& mat, std::function<double(double, double)> op)
+{
+	
+	int newRows, newCols;
+	
+	if (this->rows == mat.rows and this->columns == mat.columns) //Matrixes are the same size
+	{
+		newRows = this->rows;
+		newCols = this->columns;
+		for (int i = 0; i < newRows; ++i)
+		{
+			for (int j = 0; j < newCols; ++j)
+				this->matrix[i][j] = op(this->matrix[i][j], mat.matrix[i][j]);
+		}
+	}
+
+	else if (mat.rows == 1 and this->columns == mat.columns) // matrix and row vector -> broadcast the vector 
+	{
+		for (int i = 0; i < this->rows; ++i)
+		{
+			for (int j = 0; j < this->columns; ++j)
+				this->matrix[i][j] = op(this->matrix[i][j], mat.matrix[0][j]);
+		}
+
+	}
+	else if (mat.columns == 1 and this->rows == mat.rows) // matrix and column vector -> broadcast the vector
+	{
+		for (int i = 0; i < this->columns; ++i)
+		{
+			for (int j = 0; j < this->rows; ++j)
+				this->matrix[i][j] = op(this->matrix[j][i], mat.matrix[j][0]);
+		}
+
+	}
+	else {
+		// TODO:
+			// throw and exception
+		throw - 1;
+	}
+
+}
+
+
+void Matrix::applyScalarOperation(double scalar, std::function<double(double, double)> op)
+{
+	for (int i = 0; i < this->rows; ++i)
+	{
+		for (int j = 0; j < this->columns; ++j)
+		{
+			this->matrix[i][j] = op(this->matrix[i][j], scalar);
+		}
+	}
+}
+
+void Matrix::applyFunc(std::function<double(double)>& func)
+{
+	for (int i = 0; i < this->rows; ++i)
+	{
+		for (int j = 0; j < this->columns; ++j)
+			this->matrix[i][j] = func(this->matrix[i][j]);
+	}
 }

@@ -2,6 +2,8 @@
 #include "iostream"
 #include "utils.h"
 #include <iomanip>
+#include <string>
+
 
 /*
 C'tor
@@ -301,6 +303,103 @@ Matrix& Matrix::operator*=(double scalar)
 	return *this;
 }
 
+
+
+std::istream& operator>>(std::istream& in, Matrix& mat)
+{
+	if (&in == &std::cin)
+	{
+		return in;
+	}
+	else
+	{
+		Matrix::freeMatrix(mat);
+		std::string row;
+		double num;
+
+		int columnSize = 0;
+		int rowsLogicalSize, rowsPhysicalSize;
+		rowsLogicalSize = 0;
+		rowsPhysicalSize = 1;
+
+		int colLogicalSize, colPhysicalSize;
+		colLogicalSize = 0;
+		colPhysicalSize = 1;
+
+		double** matFromFile = new double* [rowsPhysicalSize];
+		
+
+
+		while (std::getline(in, row))
+		{
+			std::stringstream ss(row);
+
+			
+			if (rowsLogicalSize >= rowsPhysicalSize)
+			{
+				rowsPhysicalSize *= 2;
+				double** newMatSize = new double* [rowsPhysicalSize];
+				for (int i = 0; i < rowsLogicalSize; ++i)
+				{
+					newMatSize[i] = matFromFile[i];
+				}
+				delete[]matFromFile;
+				matFromFile = newMatSize;
+			}
+
+			colLogicalSize = 0;
+			colPhysicalSize = 1;
+
+			if (columnSize != 0)
+			{
+				matFromFile[rowsLogicalSize] = new double[columnSize];
+			} 
+			else
+			{
+				matFromFile[rowsLogicalSize] = new double[colPhysicalSize];
+			}
+
+			
+			while (ss >> num)
+			{
+			
+
+				if (columnSize != 0)
+				{
+					matFromFile[rowsLogicalSize][colLogicalSize++] = num;
+				}
+				else
+				{
+					if (colLogicalSize >= colPhysicalSize)
+					{
+						colPhysicalSize *= 2;
+						double* newColSize = new double[colPhysicalSize];
+
+						for (int i = 0; i < colLogicalSize; ++i)
+						{
+							newColSize[i] = matFromFile[rowsLogicalSize][i];
+						}
+						delete [] matFromFile[rowsLogicalSize];
+						matFromFile[rowsLogicalSize] = newColSize;
+					}
+
+					
+					matFromFile[rowsLogicalSize][colLogicalSize++] = num;
+					
+				}
+			}
+			columnSize = colLogicalSize;
+			rowsLogicalSize++;
+		}
+		mat.rows = rowsLogicalSize;
+		mat.columns = colLogicalSize;
+		mat.matrix = matFromFile;
+	}
+
+	
+	return in;
+
+}
 // ==================== End of Operators ====================
 
 void Matrix::printMat()

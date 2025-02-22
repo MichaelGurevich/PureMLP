@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <functional>
+#include <iostream>
+#include <sstream>
 
 class Matrix 
 {
@@ -64,6 +66,9 @@ public:
 		// = Operator
 	Matrix& operator=(const Matrix& mat);
 	Matrix& operator=(Matrix&& mat) noexcept;
+
+		// >> opeartor
+	friend std::istream& operator>>(std::istream& in, Matrix& mat);
 	
 
 	void transpose(); // transposes the matrix on which called on
@@ -79,4 +84,6 @@ public:
 	//void setColumns(int _cols) { columns = _cols; }
 
 	void printMat();
+	void printSize() { std::cout << rows << " x " << columns << std::endl; }
+
 };

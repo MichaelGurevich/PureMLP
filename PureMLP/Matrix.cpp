@@ -63,8 +63,9 @@ on which it was called on
 */
 Matrix::Matrix(const Matrix& mat) : rows(mat.rows), columns(mat.columns)
 {
-	
 	double** copiedMat = new double*[this->rows];
+
+	mat.printMat();
 
 	// perform a deep copy of the received matrix
 	for (int i = 0; i < this->rows; ++i)
@@ -328,9 +329,9 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 
 		double** matFromFile = new double* [rowsPhysicalSize];
 		
+		int ROW_CNT = 0; // TODO: delete
 
-
-		while (std::getline(in, row))
+		while (std::getline(in, row) and ROW_CNT++ < 3000)
 		{
 			std::stringstream ss(row);
 
@@ -402,7 +403,7 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 }
 // ==================== End of Operators ====================
 
-void Matrix::printMat()
+void Matrix::printMat() const
 {
 	std::cout << std::fixed << std::setprecision(1);
 	for (int i = 0; i < rows; ++i)
@@ -583,4 +584,19 @@ void Matrix::applyFunc(std::function<double(double)>& func)
 		for (int j = 0; j < this->columns; ++j)
 			this->matrix[i][j] = func(this->matrix[i][j]);
 	}
+}
+
+Matrix Matrix::slice(int start, int end, const Matrix& mat)
+{
+	int size = end - start;
+	double** slicedMat = new double*[size];
+	int index = 0;
+
+	for (int i = start; i < end; ++i)
+	{
+		slicedMat[index] = new double[mat.columns];
+		std::memcpy(slicedMat[index++], mat.matrix[i], mat.columns * sizeof(double));
+	}
+
+	return Matrix(size, mat.columns, slicedMat);
 }

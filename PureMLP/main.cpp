@@ -1,36 +1,22 @@
-#include <iostream>
-#include "Matrix.h"
+
 #include "utils.h"
-#include <fstream>
+#include "DataLoader.h"
+
 
 int main() {
     initSeed();
 
-    Matrix lables;
-    Matrix data;
+    DataLoader dl("mnist_data.txt", "mnist_labels.txt");
 
-    std::ifstream file1("mnist_labels.txt");
+    //dl.shuffleData();
 
-    if (file1.is_open())
-    {
-        file1 >> lables;
-    }
-    file1.close();
+    //Matrix oneHotLabels = DataLoader::labelsToOneHot(dl.getLabels());
 
-    lables.printSize();
+
+    std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(100, 100, 100);
+
+    splits[0].first.printSize();
     
-
-
-    std::ifstream file2("mnist_data.txt");
-
-    if (file2.is_open())
-    {
-        file2 >> data;
-    }
-    file2.close();
-
-    data.printSize();
-
    
     return 0;
 }

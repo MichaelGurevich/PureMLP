@@ -79,11 +79,12 @@ public:
 	int getRows() const { return rows; } // Getter for matrix's number of rows
 	int getColumns() const { return columns; } // Getter for matrix's number of columns
 	double** getMatrix() const { return matrix; }
-
 	//void setRows(int _rows) { rows = _rows; }
 	//void setColumns(int _cols) { columns = _cols; }
 
-	void printMat();
-	void printSize() { std::cout << rows << " x " << columns << std::endl; }
+	void printMat() const;
+	void printSize() const { std::cout << rows << " x " << columns << std::endl; }
+
+	static Matrix slice(int start, int end, const Matrix& mat);
 
 };

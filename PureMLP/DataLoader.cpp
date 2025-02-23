@@ -94,29 +94,36 @@ vector<pair<Matrix, Matrix>> DataLoader::trainValidTestSplit(unsigned int trainS
     return splits;
 }
 
+/*
+Splits training data into smaller batches to avoid vanishing gradients
+Receives:
+    unsigned int batchSize - the size of each mini-batch
+    const ref to pair of data and its corresponding labels
 
+Returns:
+    vector of pairs data and labels each size of batchSize
+*/
 vector<pair<Matrix, Matrix>> DataLoader::miniBatchGenerator(unsigned int batchSize, const pair<Matrix, Matrix>& data)
 {
-    unsigned int dataSize = data.second.getRows();
 
-    unsigned int miniBatchAmnt = dataSize / batchSize;
+    vector<pair<Matrix, Matrix>> stream;
 
-    unsigned int featuresSize = data.first.getColumns();
+    unsigned int dataSize, miniBatchAmount, featuresSize;
 
-    
+    miniBatchAmount = data.second.getRows() / batchSize; // how many minibatches can be created
+    featuresSize = data.first.getColumns(); // data feature size
 
     int batchIndex = 0;
     int rowIndex = 0;
 
     double** dataMatrix, ** labelsMatrix;
-
     dataMatrix = data.first.getMatrix();
     labelsMatrix = data.second.getMatrix();
 
-    vector<pair<Matrix, Matrix>> miniBatches;
-
-    for (int i = 0; i < miniBatchAmnt; ++i)
+    for (int i = 0; i < miniBatchAmount; ++i)
     {
+
+        // create new 2D double array for the mini-batches
         double** miniBatchData = new double* [batchSize];
         double** miniBatchLabels = new double* [batchSize];
 
@@ -131,11 +138,14 @@ vector<pair<Matrix, Matrix>> DataLoader::miniBatchGenerator(unsigned int batchSi
         }
         batchIndex += batchSize;
         rowIndex = 0;
-        miniBatches.emplace_back(
+        stream.emplace_back( // create and push mini-batch into the stream
             Matrix(batchSize, featuresSize, miniBatchData),
             Matrix(batchSize, 1, miniBatchLabels)
         );
     }
 
-    return miniBatches;
+    /* TODO: account for situation where there is a remainder
+    i.e columns 1000 batch size 400 - 200 data examples remained */
+
+    return stream;
 }

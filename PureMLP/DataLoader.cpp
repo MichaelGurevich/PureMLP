@@ -93,3 +93,49 @@ vector<pair<Matrix, Matrix>> DataLoader::trainValidTestSplit(unsigned int trainS
     
     return splits;
 }
+
+
+vector<pair<Matrix, Matrix>> DataLoader::miniBatchGenerator(unsigned int batchSize, const pair<Matrix, Matrix>& data)
+{
+    unsigned int dataSize = data.second.getRows();
+
+    unsigned int miniBatchAmnt = dataSize / batchSize;
+
+    unsigned int featuresSize = data.first.getColumns();
+
+    
+
+    int batchIndex = 0;
+    int rowIndex = 0;
+
+    double** dataMatrix, ** labelsMatrix;
+
+    dataMatrix = data.first.getMatrix();
+    labelsMatrix = data.second.getMatrix();
+
+    vector<pair<Matrix, Matrix>> miniBatches;
+
+    for (int i = 0; i < miniBatchAmnt; ++i)
+    {
+        double** miniBatchData = new double* [batchSize];
+        double** miniBatchLabels = new double* [batchSize];
+
+        for (int j = batchIndex; j < batchIndex + batchSize; ++j)
+        {
+            miniBatchData[rowIndex] = new double[featuresSize];
+            miniBatchLabels[rowIndex] = new double[1];
+
+            std::memcpy(miniBatchData[rowIndex], dataMatrix[j], featuresSize * sizeof(double));
+            miniBatchLabels[rowIndex][0] = labelsMatrix[j][0];
+            rowIndex++;
+        }
+        batchIndex += batchSize;
+        rowIndex = 0;
+        miniBatches.emplace_back(
+            Matrix(batchSize, featuresSize, miniBatchData),
+            Matrix(batchSize, 1, miniBatchLabels)
+        );
+    }
+
+    return miniBatches;
+}

@@ -422,9 +422,9 @@ void Matrix::printMat() const
 void Matrix::freeMatrix(Matrix& mat)
 {
 	// free prev matrix
-	for (int i = 0; i < mat.getRows(); ++i)
-		delete[]mat.getMatrix()[i];
-	delete mat.getMatrix();
+	for (int i = 0; i < mat.rows; ++i)
+		delete[]mat.matrix[i];
+	delete []mat.matrix;
 }
 
 Matrix Matrix::applyScalarOperation(const Matrix& mat, double scalar, std::function<double(double, double)> op)
@@ -450,7 +450,7 @@ Matrix Matrix::applyScalarOperation(const Matrix& mat, double scalar, std::funct
 
 
 /*
-For use in operaton +/- between to matrices
+For use in operation +/- between to matrices
 	Receives: reference to matrices
 
 	Returns: new matrix which is the sum/subtraction

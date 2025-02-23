@@ -13,9 +13,16 @@ int main() {
     //Matrix oneHotLabels = DataLoader::labelsToOneHot(dl.getLabels());
 
 
-    std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(100, 100, 100);
+    std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(2000, 20, 20);
 
-    splits[0].first.printSize();
+    std::vector<pair<Matrix, Matrix>> stream = DataLoader::miniBatchGenerator(100, splits[0]);
+
+
+    for (int i = 0; i < stream.size(); ++i)
+    {
+        stream[i].first.printSize();
+        std::cout << "\n\n";
+    }
     
    
     return 0;

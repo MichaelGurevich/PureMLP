@@ -75,6 +75,7 @@ public:
 	static Matrix transpose(const Matrix& mat);
 
 	void applyFunc(std::function<double(double)>& func);
+	static Matrix applyFunc(const Matrix& mat ,std::function<double(double)> func);
 
 	int getRows() const { return rows; } // Getter for matrix's number of rows
 	int getColumns() const { return columns; } // Getter for matrix's number of columns

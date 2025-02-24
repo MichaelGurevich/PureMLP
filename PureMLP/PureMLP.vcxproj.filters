@@ -27,6 +27,12 @@
     <ClCompile Include="DataLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MLP.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MLP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Matrix.h">

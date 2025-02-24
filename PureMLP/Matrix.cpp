@@ -65,7 +65,6 @@ Matrix::Matrix(const Matrix& mat) : rows(mat.rows), columns(mat.columns)
 {
 	double** copiedMat = new double*[this->rows];
 
-	mat.printMat();
 
 	// perform a deep copy of the received matrix
 	for (int i = 0; i < this->rows; ++i)
@@ -331,7 +330,7 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 		
 		int ROW_CNT = 0; // TODO: delete
 
-		while (std::getline(in, row) and ROW_CNT++ < 5000)
+		while (std::getline(in, row) and ROW_CNT++ < 1000)
 		{
 			std::stringstream ss(row);
 
@@ -480,17 +479,17 @@ Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::func
 	else if ((mat1.rows == 1 or mat2.rows == 1) and mat1.columns == mat2.columns) // matrix and row vector -> broadcast the vector 
 	{
 
-		int rows = mat1.rows != 1 ? mat1.rows : mat2.rows;
-		int columns = mat1.columns;
+		newRows = mat1.rows != 1 ? mat1.rows : mat2.rows;
+		newCols = mat1.columns;
 
 		const double* rowVector = mat1.rows == 1 ? mat1[0] : mat2[0];
 		double** matrix = mat1.rows == 1 ? mat2.getMatrix() : mat1.getMatrix();
 
-		outputMat = new double* [rows];
-		for (int i = 0; i < rows; ++i)
+		outputMat = new double* [newRows];
+		for (int i = 0; i < newRows; ++i)
 		{
-			outputMat[i] = new double[columns];
-			for (int j = 0; j < columns; ++j)
+			outputMat[i] = new double[newCols];
+			for (int j = 0; j < newCols; ++j)
 				outputMat[i][j] = op(matrix[i][j], rowVector[j]);
 		}
 
@@ -498,17 +497,17 @@ Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::func
 	else if ((mat1.columns == 1 or mat2.columns == 1) and mat1.rows == mat2.rows) // matrix and column vector -> broadcast the vector
 	{
 
-		int columns = mat1.columns == 1 ? mat2.columns : mat1.columns;
-		int rows = mat1.rows;
+		newCols = mat1.columns == 1 ? mat2.columns : mat1.columns;
+		newRows = mat1.rows;
 
 		double** columnVector = mat1.columns == 1 ? mat1.getMatrix() : mat2.getMatrix();
 		double** matrix = mat1.columns == 1 ? mat2.getMatrix() : mat1.getMatrix();
 
-		outputMat = new double* [rows];
-		for (int i = 0; i < columns; ++i)
+		outputMat = new double* [newRows];
+		for (int i = 0; i < newCols; ++i)
 		{
-			outputMat[i] = new double[columns];
-			for (int j = 0; j < rows; ++j)
+			outputMat[i] = new double[newCols];
+			for (int j = 0; j < newRows; ++j)
 				outputMat[i][j] = op(matrix[j][i], columnVector[j][0]);
 		}
 
@@ -584,6 +583,27 @@ void Matrix::applyFunc(std::function<double(double)>& func)
 		for (int j = 0; j < this->columns; ++j)
 			this->matrix[i][j] = func(this->matrix[i][j]);
 	}
+}
+
+Matrix Matrix::applyFunc(const Matrix& mat, std::function<double(double)> func)
+{
+
+	int matRows, matCols;
+	matRows = mat.getRows();
+	matCols = mat.getColumns();
+
+	double** matMatrix = mat.getMatrix();
+
+	double** newMatMatrix = new double* [matRows];
+
+	for (int i = 0; i < matRows; ++i)
+	{
+		newMatMatrix[i] = new double[matCols];
+		for (int j = 0; j < matCols; ++j)
+			newMatMatrix[i][j] = func(matMatrix[i][j]);
+	}
+
+	return Matrix(matRows, matCols, newMatMatrix);
 }
 
 Matrix Matrix::slice(int start, int end, const Matrix& mat)

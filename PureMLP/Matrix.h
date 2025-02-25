@@ -15,6 +15,12 @@ private:
 	static constexpr double addtion(double a, double b) { return a + b; }
 	static constexpr double subraction(double a, double b) { return a - b; }
 	static constexpr double multiplication(double a, double b) { return a * b; }
+	static constexpr double division(double a, double b)
+	{ 
+		if (b == 0)
+			throw - 1;
+		return a / b;
+	}
 
 	static void freeMatrix(Matrix& mat);
 	
@@ -22,6 +28,8 @@ private:
 	static Matrix linearOperation(const Matrix& mat1, const Matrix& mat2, std::function<double(double, double)> op);
 	void linearOperation(const Matrix& mat, std::function<double(double, double)> op);
 	void applyScalarOperation(double scalar, std::function<double(double, double)> op);
+
+	static Matrix reduceHelper(const Matrix& mat, int axis, std::function<double(double, double)> op);
 	
 
 public:
@@ -46,7 +54,7 @@ public:
 		// - operator
 	friend Matrix operator-(const Matrix& mat1, const Matrix& mat2) { return Matrix::linearOperation(mat1, mat2, Matrix::addtion); }
 	friend Matrix operator-(const Matrix& mat, double scalar) { return Matrix::applyScalarOperation(mat, scalar, subraction); }
-	friend Matrix operator-(double scalar, const Matrix& mat) { return Matrix::applyScalarOperation(mat, scalar, subraction); }
+	friend Matrix operator-(double scalar, const Matrix& mat);
 	Matrix& operator-=(const Matrix& mat);
 	Matrix& operator-=(double scalar);
 
@@ -57,7 +65,15 @@ public:
 	friend Matrix operator*(double scalar, const Matrix& mat) { return Matrix::applyScalarOperation(mat, scalar, multiplication); }
 	Matrix& operator*=(const Matrix& mat);
 	Matrix& operator*=(double scalar);
+
+		// '/' operator
+	friend Matrix operator/(const Matrix& mat, double scalar) { return Matrix::applyScalarOperation(mat, scalar, division); }
 	
+
+
+		// & operator - elemet-wise multiplication
+
+	friend Matrix operator& (const Matrix& mat1, const Matrix& mat2) { return Matrix::linearOperation(mat1, mat2, multiplication); }
 
 		// [ ] Operator
 	const double* operator[](unsigned int index) const { return matrix[index]; }
@@ -67,12 +83,14 @@ public:
 	Matrix& operator=(const Matrix& mat);
 	Matrix& operator=(Matrix&& mat) noexcept;
 
-		// >> opeartor
+		// >> Operator
 	friend std::istream& operator>>(std::istream& in, Matrix& mat);
 	
 
 	void transpose(); // transposes the matrix on which called on
 	static Matrix transpose(const Matrix& mat);
+
+	static Matrix reduce(const Matrix& mat, int axis = 0, char op = '+');
 
 	void applyFunc(std::function<double(double)>& func);
 	static Matrix applyFunc(const Matrix& mat ,std::function<double(double)> func);

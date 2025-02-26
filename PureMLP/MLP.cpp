@@ -8,10 +8,18 @@ initialized weights and bais to random numbers according to the parmeters recive
 MLP::MLP(int numFeatures, int numHidden, int numClasses)
 	: numFeatures(numFeatures), numHidden(numHidden), numClasses(numClasses) 
 {
+	
+	/*
+	Hidden layer - initialize weight and bais
+		w_h - numHiddem x numFeatures
+		b_h - 1 x numHidden
+	*/
 	w_h = Matrix(numHidden, numFeatures, true);
-	b_h = Matrix(1, numHidden, true);
+	b_h = Matrix(1, numHidden, false);
+
+
 	w_o = Matrix(numClasses, numHidden, true);
-	b_o = Matrix(1, numClasses, true);
+	b_o = Matrix(1, numClasses, false);
 }
 
 

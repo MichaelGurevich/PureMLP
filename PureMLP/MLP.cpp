@@ -42,33 +42,45 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 	Matrix y_onehot = DataLoader::labelsToOneHot(y);
 	
 	
-	/*
-	Output layer weights and bias update
-	*/
+	//  output layer 
 
 	Matrix d_z_o__d_w_o = a_h;
 	Matrix d_a_o__d_z_o = a_o & (1 - a_o);
 	Matrix d_loss__d_a_o = 2 * (a_o - y_onehot) / y_onehot.getColumns();
 
 
-	Matrix delta_out = d_a_o__d_z_o & d_loss__d_a_o; // num examples x  num hidden -> num examples x 10
+	Matrix delta_out = d_a_o__d_z_o & d_loss__d_a_o; // [ n examples x n output ]
+
 
 	Matrix d_loss__d_w_o = Matrix::transpose(delta_out) * d_z_o__d_w_o;
 
 	Matrix d_loss__d_b_o = Matrix::reduce(delta_out, 0, '+');
 
-	return {
-		d_z_o__d_w_o,
-		d_z_o__d_w_o,
-		d_z_o__d_w_o,
-		d_z_o__d_w_o
-	};
-
-
-	/*
 	
-	*/
 
+
+	// hidden layer
+	// d_loss__d_w_h = d_z_h__d_w_h * d_a_h__d_z_h * d_z_o__d_a_o * delata out 
+	
+	Matrix d_z_h__d_w_h = X; // [ n examples x features ]
+
+	Matrix d_a_h__d_z_h = a_h & (1 - a_h); // [ n examples x n hidden ] -
+	 
+	Matrix d_z_o__d_a_h = w_o; // [ n output x n hidden ] - 
+
+	Matrix d_loss__d_a_h = delta_out * d_z_o__d_a_h; // [ n examples x n hidden ] -
+
+
+
+	Matrix d_loss__d_w_h = Matrix::transpose((d_loss__d_a_h & d_a_h__d_z_h)) * d_z_h__d_w_h;
+	Matrix d_loss__d_b_h = Matrix::reduce(d_loss__d_a_h & d_a_h__d_z_h, 0, '+');
+	
+	return {
+		d_loss__d_w_o,
+		d_loss__d_b_o,
+		d_loss__d_w_h,
+		d_loss__d_b_h
+	};
 
 	
 }

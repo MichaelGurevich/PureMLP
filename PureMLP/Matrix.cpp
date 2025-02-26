@@ -154,6 +154,28 @@ Matrix& Matrix::operator+=(const Matrix& mat)
 
 
 	// Operator -
+Matrix operator-(double scalar, const Matrix& mat)
+{
+	unsigned int matRows, matCols;
+
+	matRows = mat.getRows();
+	matCols = mat.getColumns();
+
+	double** newMat = new double* [matRows];
+	double** matMat = mat.getMatrix();
+	for (int i = 0; i < matRows; ++i)
+	{
+		newMat[i] = new double[matCols];
+		for (int j = 0; j < matCols; ++j)
+		{
+			newMat[i][j] = scalar - matMat[i][j];
+		}
+	}
+
+	return Matrix(matRows, matCols, newMat);
+}
+
+
 Matrix& Matrix::operator-=(double scalar)
 {
 	this->applyScalarOperation(scalar, Matrix::subraction);
@@ -171,7 +193,7 @@ Matrix& Matrix::operator-=(const Matrix& mat)
 /*
 Operator =
 
-Receives: referece to a matrix
+Receives: reference to a matrix
 Updates the matrix on which the operator was called on 
 Returns a ref to the left hand matrix
 */
@@ -462,6 +484,8 @@ Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::func
 	double** outputMat = nullptr;
 	int newRows, newCols;
 	//Matrixes are the same size
+
+	
 	if (mat1.rows == mat2.rows and mat1.columns == mat2.columns)
 	{
 		newRows = mat1.rows;
@@ -472,7 +496,7 @@ Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::func
 		{
 			outputMat[i] = new double[newCols];
 			for (int j = 0; j < newCols; ++j)
-				outputMat[i][j] = op(mat1[i][j], mat2[i][j]);
+				outputMat[i][j] = op(mat1.matrix[i][j], mat2.matrix[i][j]);
 		}
 	}
 
@@ -619,4 +643,60 @@ Matrix Matrix::slice(int start, int end, const Matrix& mat)
 	}
 
 	return Matrix(size, mat.columns, slicedMat);
+}
+
+Matrix Matrix::reduce(const Matrix& mat, int axis, char op)
+{
+
+	switch (op)
+	{
+	case '+':
+		return reduceHelper(mat, axis, addtion);
+		break;
+	case '*':
+		return reduceHelper(mat, axis, multiplication);
+		break;
+	default:
+		throw - 1;
+		break;
+	}
+
+}
+
+Matrix Matrix::reduceHelper(const Matrix& mat, int axis, std::function<double(double, double)> op)
+{
+	if (axis == 0)
+	{
+		double** newMat = new double* [1];
+		newMat[0] = new double[mat.columns];
+
+		for (int i = 0; i < mat.columns; ++i)
+		{
+			int sum = 0;
+			for (int j = 0; j < mat.rows; ++j)
+			{
+				op(sum, mat.matrix[i][j]);
+			}
+			newMat[0][i] = sum;
+		}
+		return Matrix(1, mat.columns, newMat);
+	}
+	else if (axis == 1)
+	{
+		double** newMat = new double* [mat.rows];
+
+		for (int i = 0; i < mat.rows; ++i)
+		{
+			newMat[i] = new double[1];
+			int sum = 0;
+			for (int j = 0; j < mat.columns; ++j)
+			{
+				op(sum, mat.matrix[i][j]);
+			}
+			newMat[i][0] = sum;
+		}
+		return Matrix(mat.rows, 1, newMat);
+	}
+	else
+		throw - 1;
 }

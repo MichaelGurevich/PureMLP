@@ -22,8 +22,8 @@ private:
 public:
 	MLP(int numFeatures, int numHidden, int numClasses);
 
-	std::array<Matrix, 2> forward(const Matrix& X);
-	std::array<Matrix, 4> backward(const Matrix& X, const Matrix& y, const Matrix& a_h, const Matrix& a_out);
+	std::array<Matrix, 2> forward(const Matrix& X) const;
+	std::array<Matrix, 4> backward(const Matrix& X, const Matrix& y, const Matrix& a_h, const Matrix& a_o);
 
 
 };

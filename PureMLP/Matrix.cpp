@@ -702,3 +702,13 @@ Matrix Matrix::reduceHelper(const Matrix& mat, int axis, std::function<double(do
 	else
 		throw - 1;
 }
+
+double Matrix::mean(const Matrix& mat) 
+{
+	double sum = 0;
+	for (int i = 0; i < mat.rows; ++i)
+		for (int j = 0; j < mat.columns; ++j)
+			sum += mat.matrix[i][j];
+
+	return sum / (mat.rows * mat.columns);
+}

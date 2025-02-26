@@ -38,6 +38,9 @@ std::array<Matrix, 2> MLP::forward(const Matrix& X) const
 
 std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matrix& a_h, const Matrix& a_o)
 {
+
+	
+
 	// Encode labels into one hot
 	Matrix y_onehot = DataLoader::labelsToOneHot(y);
 	
@@ -85,23 +88,24 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 	
 }
 
-void MLP::fit(const Matrix & X, const Matrix & y, int numEpochs, int learningRate)
+void MLP::fit(Matrix & X, const Matrix & y, int numEpochs, int learningRate)
 {
 
-	
+	double mse = 0;
 
-	
+	X = ((X / 255) - 5) * 2;
 
 	for (int i = 0; i < numEpochs; ++i)
 	{
 		
-		std::cout << "epoch no. " << i + 1 << std::endl;
+		
 		std::vector<pair<Matrix, Matrix>> stream = DataLoader::miniBatchGenerator(100, std::make_pair(X, y));
 
-		int cnt = 1;
+		double loss = 0;
+		int batchesNum = 0;
 		for (pair<Matrix, Matrix>& trainPair : stream)
 		{
-
+			++batchesNum;
 			
 			
 			std::array<Matrix, 2> forwardOuput = forward(trainPair.first);
@@ -113,8 +117,13 @@ void MLP::fit(const Matrix & X, const Matrix & y, int numEpochs, int learningRat
 			w_o -= learningRate * backwardOutput[0];
 			b_o -= learningRate * backwardOutput[1];
 
+			Matrix oneHotY = DataLoader::labelsToOneHot(trainPair.second);
+			loss = Matrix::mean(Matrix::applyFunc((forwardOuput[1] - oneHotY), [](double a) {return std::pow(a, 2); }));
+			mse += loss;
 		}
 
+		mse = mse / (batchesNum + 1);
+		std::cout << "epoch no. " << i + 1 << " MSE: " << mse << std::endl;
 
 	}
 }

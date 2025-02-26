@@ -68,6 +68,7 @@ public:
 
 		// '/' operator
 	friend Matrix operator/(const Matrix& mat, double scalar) { return Matrix::applyScalarOperation(mat, scalar, division); }
+	//Matrix operator/(double scalar) { linearOperation(*this, division); }
 	
 
 
@@ -100,6 +101,8 @@ public:
 	double** getMatrix() const { return matrix; }
 	//void setRows(int _rows) { rows = _rows; }
 	//void setColumns(int _cols) { columns = _cols; }
+
+	static double mean(const Matrix& mat);
 
 	void printMat() const;
 	void printSize() const { std::cout << rows << " x " << columns << std::endl; }

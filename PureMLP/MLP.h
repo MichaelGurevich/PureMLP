@@ -25,7 +25,7 @@ public:
 	std::array<Matrix, 2> forward(const Matrix& X) const;
 	std::array<Matrix, 4> backward(const Matrix& X, const Matrix& y, const Matrix& a_h, const Matrix& a_o);
 
-	void fit(const Matrix& X, const Matrix& y, int numEpochs = 20, int learningRate = 0.1);
+	void fit(Matrix& X, const Matrix& y, int numEpochs = 20, int learningRate = 0.1);
 
 
 };

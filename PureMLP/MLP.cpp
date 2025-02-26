@@ -85,7 +85,36 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 	
 }
 
+void MLP::fit(const Matrix & X, const Matrix & y, int numEpochs, int learningRate)
+{
+
+	
+
+	
+
+	for (int i = 0; i < numEpochs; ++i)
+	{
+		
+		std::cout << "epoch no. " << i + 1 << std::endl;
+		std::vector<pair<Matrix, Matrix>> stream = DataLoader::miniBatchGenerator(100, std::make_pair(X, y));
+
+		int cnt = 1;
+		for (pair<Matrix, Matrix>& trainPair : stream)
+		{
+
+			
+			
+			std::array<Matrix, 2> forwardOuput = forward(trainPair.first);
+
+			std::array<Matrix, 4> backwardOutput = backward(trainPair.first, trainPair.second, forwardOuput[1], forwardOuput[0]);
+
+			w_h -= learningRate * backwardOutput[2];
+			b_h -= learningRate * backwardOutput[3];
+			w_o -= learningRate * backwardOutput[0];
+			b_o -= learningRate * backwardOutput[1];
+
+		}
 
 
-// num examples x num features * num features x num hidden 
-// num examples x num hidden
+	}
+}

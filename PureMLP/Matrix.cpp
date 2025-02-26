@@ -350,10 +350,12 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 
 		double** matFromFile = new double* [rowsPhysicalSize];
 		
-		int ROW_CNT = 0; // TODO: delete
+		//int ROW_CNT = 0; // TODO: delete
 
-		while (std::getline(in, row) and ROW_CNT++ < 1000)
+		int cnt = 0;
+		while (std::getline(in, row) and cnt < 13000)
 		{
+			cnt++;
 			std::stringstream ss(row);
 
 			

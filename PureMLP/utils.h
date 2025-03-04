@@ -2,7 +2,7 @@
 #include <random>
 
 void initSeed();
-double getRandomNumber(int low, int high);
+double getRandomNumber(double low, double high);
 
 template <typename T> 
 void swap(T* a, T* b)
@@ -11,3 +11,23 @@ void swap(T* a, T* b)
 	*a = *b;
 	*b = temp;
 }
+
+template <typename T>
+int maxIndex(T* arr, int size)
+{
+	// TODO: handle size 0
+
+	int maxIndex = 0;
+	T max = arr[0];
+
+	for (int i = 1; i < size; ++i)
+	{
+		if (arr[i] > max)
+		{
+			maxIndex = i;
+			max = arr[i];
+		}
+	}
+	return maxIndex;
+}
+

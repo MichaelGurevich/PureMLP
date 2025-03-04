@@ -36,8 +36,10 @@ Matrix::Matrix(unsigned int rows, unsigned int cols, bool initRandom) : rows(row
 				matrix[i] = new double[columns]; // create columns for each rows
 				for (int j = 0; j < columns; ++j)
 				{
-					//matrix[i][j] = getRandomNumber(-1, 1); // get random number for each entry in the matrix
-					matrix[i][j] = sum++;
+					
+					double bound = std::sqrt(6) / (std::sqrt(rows + cols));
+
+					matrix[i][j] = getRandomNumber(-bound, bound); // get random number for each entry in the matrix
 				}
 
 

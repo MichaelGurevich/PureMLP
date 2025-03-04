@@ -10,7 +10,7 @@ void initSeed()
 	global_rng.seed(seed);
 }
 
-double getRandomNumber(int low, int high)
+double getRandomNumber(double low, double high)
 {
 	std::uniform_real_distribution<double> dist(low, high);
 	return dist(global_rng);

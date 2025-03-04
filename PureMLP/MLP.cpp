@@ -1,6 +1,6 @@
 #include "MLP.h"
 #include "DataLoader.h"
-
+#include "utils.h"
 
 /*
 c'tor
@@ -17,7 +17,7 @@ MLP::MLP(int numFeatures, int numHidden, int numClasses)
 	*/
 	w_h = Matrix(numHidden, numFeatures, true);
 	b_h = Matrix(1, numHidden, false);
-
+	
 
 	w_o = Matrix(numClasses, numHidden, true);
 	b_o = Matrix(1, numClasses, false);
@@ -26,11 +26,21 @@ MLP::MLP(int numFeatures, int numHidden, int numClasses)
 
 std::array<Matrix, 2> MLP::forward(const Matrix& X) const
 {
+
+	// X [ num examples x 784 ]
+	// W_H [ Num hidden x 784 ]
+	// X * W_H [num Examples x num hidden ] 
+	// b_h [1 x num hidden]
+
+
 	Matrix z_h = X * Matrix::transpose(w_h) + b_h;
 	Matrix a_h = Matrix::applyFunc(z_h, sigmoid);
 
-	Matrix z_o = a_h * Matrix::transpose(w_o) + b_h;
+
+	Matrix z_o = a_h * Matrix::transpose(w_o) + b_o;
 	Matrix a_o = Matrix::applyFunc(z_o, sigmoid);
+
+	
 
 	return { a_h, a_o };
 }
@@ -39,14 +49,14 @@ std::array<Matrix, 2> MLP::forward(const Matrix& X) const
 std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matrix& a_h, const Matrix& a_o)
 {
 
-	
+	//double acc = calcAcc(y, predictedLabels(a_o));
+	//std::cout << "Acc: " << acc << "%" << std::endl;
 
 	// Encode labels into one hot
 	Matrix y_onehot = DataLoader::labelsToOneHot(y);
 	
 	
 	//  output layer 
-
 	Matrix d_z_o__d_w_o = a_h;
 	Matrix d_a_o__d_z_o = a_o & (1 - a_o);
 	Matrix d_loss__d_a_o = 2 * (a_o - y_onehot) / y_onehot.getColumns();
@@ -78,6 +88,10 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 	Matrix d_loss__d_w_h = Matrix::transpose((d_loss__d_a_h & d_a_h__d_z_h)) * d_z_h__d_w_h;
 	Matrix d_loss__d_b_h = Matrix::reduce(d_loss__d_a_h & d_a_h__d_z_h, 0, '+');
 	
+	
+	
+
+
 	return {
 		d_loss__d_w_o,
 		d_loss__d_b_o,
@@ -93,7 +107,7 @@ void MLP::fit(Matrix & X, const Matrix & y, int numEpochs, int learningRate)
 
 	double mse = 0;
 
-	X = ((X / 255) - 5) * 2;
+	X = ((X / 255) - 0.5) * 2; // Normalize data to [-1, 1]
 
 	for (int i = 0; i < numEpochs; ++i)
 	{
@@ -107,10 +121,10 @@ void MLP::fit(Matrix & X, const Matrix & y, int numEpochs, int learningRate)
 		{
 			++batchesNum;
 			
-			
 			std::array<Matrix, 2> forwardOuput = forward(trainPair.first);
 
-			std::array<Matrix, 4> backwardOutput = backward(trainPair.first, trainPair.second, forwardOuput[1], forwardOuput[0]);
+			std::array<Matrix, 4> backwardOutput = backward(trainPair.first, trainPair.second, forwardOuput[0], forwardOuput[1]);
+			
 
 			w_h -= learningRate * backwardOutput[2];
 			b_h -= learningRate * backwardOutput[3];
@@ -120,10 +134,49 @@ void MLP::fit(Matrix & X, const Matrix & y, int numEpochs, int learningRate)
 			Matrix oneHotY = DataLoader::labelsToOneHot(trainPair.second);
 			loss = Matrix::mean(Matrix::applyFunc((forwardOuput[1] - oneHotY), [](double a) {return std::pow(a, 2); }));
 			mse += loss;
+
+			
 		}
 
+		
+
 		mse = mse / (batchesNum + 1);
+
+
 		std::cout << "epoch no. " << i + 1 << " MSE: " << mse << std::endl;
 
 	}
+}
+
+
+
+double MLP::calcAcc(const Matrix& y, const std::vector<int>& predictions)
+{
+	int cnt = 0;
+
+	for (int i = 0; i < y.getColumns(); ++i)
+	{
+		if (predictions[i] == y[0][i])
+			cnt++;
+	}
+
+	return cnt / y.getColumns();
+}
+
+
+
+std::vector<int> MLP::predictedLabels(const Matrix& a_o)
+{
+	int rows = a_o.getRows();
+	int cols = a_o.getColumns();
+	double** mat = a_o.getMatrix();
+
+	std::vector<int> predictions;
+
+	for (int i = 0; i < rows; ++i)
+	{
+		predictions.push_back(maxIndex(mat[i], cols));
+	}
+
+	return predictions;
 }

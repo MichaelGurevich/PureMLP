@@ -45,6 +45,26 @@ std::array<Matrix, 2> MLP::forward(const Matrix& X) const
 	return { a_h, a_o };
 }
 
+/*std::tuple<Matrix, Matrix> MLP::forward(const Matrix& X) const
+{
+	// X [ num examples x 784 ]
+	// W_H [ Num hidden x 784 ]
+	// X * W_H [num Examples x num hidden ] 
+	// b_h [1 x num hidden]
+
+
+	Matrix z_h = X * Matrix::transpose(w_h) + b_h;
+	Matrix a_h = Matrix::applyFunc(z_h, sigmoid);
+
+
+	Matrix z_o = a_h * Matrix::transpose(w_o) + b_o;
+	Matrix a_o = Matrix::applyFunc(z_o, sigmoid);
+
+
+
+	return { a_h, a_o };
+}*/
+
 
 std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matrix& a_h, const Matrix& a_o)
 {
@@ -88,9 +108,6 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 	Matrix d_loss__d_w_h = Matrix::transpose((d_loss__d_a_h & d_a_h__d_z_h)) * d_z_h__d_w_h;
 	Matrix d_loss__d_b_h = Matrix::reduce(d_loss__d_a_h & d_a_h__d_z_h, 0, '+');
 	
-	
-	
-
 
 	return {
 		d_loss__d_w_o,
@@ -102,81 +119,104 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 	
 }
 
-void MLP::fit(Matrix & X, const Matrix & y, int numEpochs, int learningRate)
+void MLP::fit(Matrix& X, const Matrix& y,
+	const Matrix& validX, const Matrix& validY, const Matrix& testX, const Matrix& testY, int numEpochs, double learningRate)
 {
-
-	double mse = 0;
 
 	X = ((X / 255) - 0.5) * 2; // Normalize data to [-1, 1]
 
 	for (int i = 0; i < numEpochs; ++i)
 	{
 		
-		
+		// ******* THIS LINE IS KINDA SUS ***** each epoch creating the same stream
 		std::vector<pair<Matrix, Matrix>> stream = DataLoader::miniBatchGenerator(100, std::make_pair(X, y));
-
-		double loss = 0;
-		int batchesNum = 0;
 		for (pair<Matrix, Matrix>& trainPair : stream)
 		{
-			++batchesNum;
-			
+
+			auto [a_w, a_o] = forward(trainPair.first); 
+
 			std::array<Matrix, 2> forwardOuput = forward(trainPair.first);
+		
 
-			std::array<Matrix, 4> backwardOutput = backward(trainPair.first, trainPair.second, forwardOuput[0], forwardOuput[1]);
+			auto [d_loss__d_w_o, d_loss__d_b_o, d_loss__d_w_h, d_loss__d_b_h] = 
+				backward(trainPair.first, trainPair.second, forwardOuput[0], forwardOuput[1]);
+
+			//d_loss__d_w_h.printMat();
+
+
+			//(learningRate * d_loss__d_w_h).printMat();
 			
 
-			w_h -= learningRate * backwardOutput[2];
-			b_h -= learningRate * backwardOutput[3];
-			w_o -= learningRate * backwardOutput[0];
-			b_o -= learningRate * backwardOutput[1];
-
-			Matrix oneHotY = DataLoader::labelsToOneHot(trainPair.second);
-			loss = Matrix::mean(Matrix::applyFunc((forwardOuput[1] - oneHotY), [](double a) {return std::pow(a, 2); }));
-			mse += loss;
+			w_h = w_h - learningRate * d_loss__d_w_h;
+			b_h = b_h - learningRate * d_loss__d_b_h;
+			w_o = w_o - learningRate * d_loss__d_w_o;
+			b_o = b_o - learningRate * d_loss__d_b_o;
 
 			
 		}
-
 		
+		// Epoch logging
+		auto [trainMse, trainAcc] = computeMseAndAcc(*this, X, y, 100);
+		auto [validMse, validAcc] = computeMseAndAcc(*this, validX, validY, 100);
+		trainAcc *= 100;
+		validAcc *= 100;
 
-		mse = mse / (batchesNum + 1);
-
-
-		std::cout << "epoch no. " << i + 1 << " MSE: " << mse << std::endl;
-
+		cout << "Epoch: " << i + 1 << " | Train Mse: " << trainMse << " | Train Acc: " << trainAcc << " | Valid Acc: " << validAcc << endl;
+		
 	}
 }
 
-
-
-double MLP::calcAcc(const Matrix& y, const std::vector<int>& predictions)
+double MLP::mseLoss(const Matrix& targets, const Matrix& predicts) 
 {
+	Matrix oneHotTargets = DataLoader::labelsToOneHot(targets);
+	return Matrix::mean(Matrix::applyFunc(oneHotTargets - predicts, [](double a) {return a * a; }));
+}
+
+int MLP::correctPredictions(const Matrix& targets, const Matrix& predicts)
+{
+	int numExamples = predicts.getRows();
+	int numClasses = predicts.getColumns();
 	int cnt = 0;
 
-	for (int i = 0; i < y.getColumns(); ++i)
+
+	for (int i = 0; i < numExamples; ++i)
 	{
-		if (predictions[i] == y[0][i])
-			cnt++;
+		if (targets[i][0] == maxIndex(predicts[i], numClasses))
+			++cnt;
 	}
 
-	return cnt / y.getColumns();
+	return cnt;
 }
 
 
 
-std::vector<int> MLP::predictedLabels(const Matrix& a_o)
+std::array<double, 2> MLP::computeMseAndAcc(const MLP& mlp, const Matrix & X, const Matrix & y, int miniBatchSize)
 {
-	int rows = a_o.getRows();
-	int cols = a_o.getColumns();
-	double** mat = a_o.getMatrix();
+	double loss, mse, acc;
+	int numExamples, correctPredCnt;
+	numExamples = correctPredCnt = 0;
+	mse = 0;
 
-	std::vector<int> predictions;
 
-	for (int i = 0; i < rows; ++i)
+	std::vector<pair<Matrix, Matrix>> stream = DataLoader::miniBatchGenerator(miniBatchSize, std::make_pair(X, y));
+
+	for (pair<Matrix, Matrix>& validationPair: stream)
 	{
-		predictions.push_back(maxIndex(mat[i], cols));
+		auto [_, predictions] = mlp.forward(validationPair.first); // get mlps preditions for the given batch
+
+		loss = mseLoss(validationPair.second, predictions);
+
+
+		correctPredCnt = correctPredictions(validationPair.second, predictions);
+		numExamples += validationPair.first.getRows();
+
+		mse += loss;
 	}
 
-	return predictions;
+	mse /= stream.size();
+	acc = static_cast<double>(correctPredCnt) / numExamples;
+
+
+	return { mse, acc };
+
 }

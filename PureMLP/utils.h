@@ -13,7 +13,7 @@ void swap(T* a, T* b)
 }
 
 template <typename T>
-int maxIndex(T* arr, int size)
+int maxIndex(const T* arr, int size)
 {
 	// TODO: handle size 0
 

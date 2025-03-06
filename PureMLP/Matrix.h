@@ -52,7 +52,7 @@ public:
 	
 	
 		// - operator
-	friend Matrix operator-(const Matrix& mat1, const Matrix& mat2) { return Matrix::linearOperation(mat1, mat2, Matrix::addtion); }
+	friend Matrix operator-(const Matrix& mat1, const Matrix& mat2) { return Matrix::linearOperation(mat1, mat2, Matrix::subraction); }
 	friend Matrix operator-(const Matrix& mat, double scalar) { return Matrix::applyScalarOperation(mat, scalar, subraction); }
 	friend Matrix operator-(double scalar, const Matrix& mat);
 	Matrix& operator-=(const Matrix& mat);

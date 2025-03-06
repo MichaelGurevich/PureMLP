@@ -15,7 +15,7 @@ int main() {
     std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(10000, 2000, 100);
 
 
-    model.fit(splits[0].first, splits[0].second);
+    model.fit(splits[0].first, splits[0].second, splits[1].first, splits[1].second, splits[2].first, splits[2].second);
     
     std::cout << "\n\n";
     

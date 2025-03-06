@@ -17,20 +17,22 @@ private:
 	Matrix b_o; // bias output
 
 	static constexpr double e = 2.71828182845904523536;
-
-	static double calcAcc(const Matrix& y, const std::vector<int>& predictions);
-
 	static double sigmoid(double x) { return std::pow(e, x) / (1 + std::pow(e,x)); }
 
-	static std::vector<int> predictedLabels(const Matrix& a_o);
+	static double mseLoss(const Matrix& targets, const Matrix& predicts);
+	static int correctPredictions(const Matrix& targets, const Matrix& predicts);
+
+	static std::array<double, 2> computeMseAndAcc(const MLP& mlp, const Matrix& X, const Matrix& y, int miniBatchSize = 100);
 
 public:
 	MLP(int numFeatures, int numHidden, int numClasses);
 
 	std::array<Matrix, 2> forward(const Matrix& X) const;
+	//std::tuple<Matrix, Matrix> forward(const Matrix& X) const;
 	std::array<Matrix, 4> backward(const Matrix& X, const Matrix& y, const Matrix& a_h, const Matrix& a_o);
 
-	void fit(Matrix& X, const Matrix& y, int numEpochs = 20, int learningRate = 0.01);
+	void fit(Matrix& X, const Matrix& y,
+		const Matrix& validX, const Matrix& validY, const Matrix& testX, const Matrix& testY, int numEpochs=50, double learningRate=0.01);
 
 
 };

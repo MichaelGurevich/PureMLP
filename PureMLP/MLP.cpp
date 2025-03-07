@@ -120,16 +120,20 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 }
 
 void MLP::fit(Matrix& X, const Matrix& y,
-	const Matrix& validX, const Matrix& validY, const Matrix& testX, const Matrix& testY, int numEpochs, double learningRate)
+	 Matrix& validX, const Matrix& validY,  Matrix& testX, const Matrix& testY, int numEpochs, double learningRate)
 {
 
 	X = ((X / 255) - 0.5) * 2; // Normalize data to [-1, 1]
+	testX = ((testX / 255) - 0.5) * 2; // Normalize data to [-1, 1]
+	validX = ((validX / 255) - 0.5) * 2; // Normalize data to [-1, 1]
+	
+	
 
 	for (int i = 0; i < numEpochs; ++i)
 	{
-		
-		// ******* THIS LINE IS KINDA SUS ***** each epoch creating the same stream
+	
 		std::vector<pair<Matrix, Matrix>> stream = DataLoader::miniBatchGenerator(100, std::make_pair(X, y));
+
 		for (pair<Matrix, Matrix>& trainPair : stream)
 		{
 
@@ -141,11 +145,6 @@ void MLP::fit(Matrix& X, const Matrix& y,
 			auto [d_loss__d_w_o, d_loss__d_b_o, d_loss__d_w_h, d_loss__d_b_h] = 
 				backward(trainPair.first, trainPair.second, forwardOuput[0], forwardOuput[1]);
 
-			//d_loss__d_w_h.printMat();
-
-
-			//(learningRate * d_loss__d_w_h).printMat();
-			
 
 			w_h = w_h - learningRate * d_loss__d_w_h;
 			b_h = b_h - learningRate * d_loss__d_b_h;
@@ -161,7 +160,10 @@ void MLP::fit(Matrix& X, const Matrix& y,
 		trainAcc *= 100;
 		validAcc *= 100;
 
-		cout << "Epoch: " << i + 1 << " | Train Mse: " << trainMse << " | Train Acc: " << trainAcc << " | Valid Acc: " << validAcc << endl;
+		cout << "Epoch: " << i + 1
+			<< " | Train Mse: " << trainMse
+			<< " | Train Acc: " << trainAcc << "%"
+			<< " | Valid Acc: " << validAcc << "%" << endl;
 		
 	}
 }
@@ -207,7 +209,7 @@ std::array<double, 2> MLP::computeMseAndAcc(const MLP& mlp, const Matrix & X, co
 		loss = mseLoss(validationPair.second, predictions);
 
 
-		correctPredCnt = correctPredictions(validationPair.second, predictions);
+		correctPredCnt += correctPredictions(validationPair.second, predictions);
 		numExamples += validationPair.first.getRows();
 
 		mse += loss;

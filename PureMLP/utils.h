@@ -1,6 +1,10 @@
 #pragma once
 #include <random>
 
+extern unsigned long int seed;
+extern std::mt19937 global_rng;
+
+
 void initSeed();
 double getRandomNumber(double low, double high);
 

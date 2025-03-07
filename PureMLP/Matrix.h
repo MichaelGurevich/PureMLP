@@ -102,6 +102,8 @@ public:
 	//void setRows(int _rows) { rows = _rows; }
 	//void setColumns(int _cols) { columns = _cols; }
 
+	void setMatrix(double** mat, int rows, int cols);
+
 	static double mean(const Matrix& mat);
 
 	void printMat() const;

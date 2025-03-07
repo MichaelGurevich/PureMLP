@@ -355,7 +355,7 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 		//int ROW_CNT = 0; // TODO: delete
 
 		int cnt = 0;
-		while (std::getline(in, row) and cnt < 13000)
+		while (std::getline(in, row))
 		{
 			cnt++;
 			std::stringstream ss(row);
@@ -713,4 +713,13 @@ double Matrix::mean(const Matrix& mat)
 			sum += mat.matrix[i][j];
 
 	return sum / (mat.rows * mat.columns);
+}
+
+
+void Matrix::setMatrix(double** mat, int rows, int cols)
+{
+	Matrix::freeMatrix(*this);
+	matrix = mat;
+	this->rows = rows;
+	this->columns = cols;
 }

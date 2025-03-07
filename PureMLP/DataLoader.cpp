@@ -12,6 +12,8 @@ DataLoader::DataLoader(string dataFileName, string labelsFileName)
         labelsFile >> labels;
     labelsFile.close();
 
+   // std::cout << labels[1200][0];
+
     std::ifstream dataFile(dataFileName);
 
     if (dataFile.is_open())
@@ -44,34 +46,100 @@ Matrix DataLoader::labelsToOneHot(const Matrix& labels)
 
 void DataLoader::shuffleData()
 {
-    int index1, index2, high;
-
-    high = labels.getRows() - 1;
 
     double** labelsMat = labels.getMatrix();
     double** dataMat = data.getMatrix();
 
-    for (int i = 0; i < high+1; ++i)
-    {
-        index1 = getRandomNumber(0, high);
-        index2 = getRandomNumber(0, high);
+    int rows = labels.getRows();
+    int cols = data.getColumns();
 
-        swap(labelsMat[index1], labelsMat[index2]);
-        swap(dataMat[index1], dataMat[index2]);
+    std::vector<int> indicies(rows);
+
+    for (int i = 0; i < rows; ++i)
+        indicies[i] = i;
+
+    std::shuffle(indicies.begin(), indicies.end(), global_rng);
+
+
+    double** shuffledData, ** shuffledLabels;
+
+    shuffledData = new double* [rows];
+    shuffledLabels = new double* [rows];
+
+    int index;
+
+    
+    for (int i = 0; i < rows; ++i)
+    {
+        shuffledData[i] = new double[cols];
+        shuffledLabels[i] = new double[1];
+
+        index = indicies[i];
+
+        std::memcpy(shuffledData[i], dataMat[index], cols * sizeof(double));
+        shuffledLabels[i][0] = labelsMat[index][0];
     }
+
+    labels.setMatrix(shuffledLabels, rows, 1);
+    data.setMatrix(shuffledData, rows, cols);
+
 }
+
+
+
+void DataLoader::shuffleData(Matrix& X, Matrix& y)
+{
+    double** labelsMat = y.getMatrix();
+    double** dataMat = X.getMatrix();
+
+    int rows = y.getRows();
+    int cols = X.getColumns();
+
+    std::vector<int> indicies(rows);
+
+    for (int i = 0; i < rows; ++i)
+        indicies[i] = i;
+
+    std::shuffle(indicies.begin(), indicies.end(), global_rng);
+
+
+    double** shuffledData, ** shuffledLabels;
+
+    shuffledData = new double* [rows];
+    shuffledLabels = new double* [rows];
+
+    int index;
+
+
+    for (int i = 0; i < rows; ++i)
+    {
+        shuffledData[i] = new double[cols];
+        shuffledLabels[i] = new double[1];
+
+        index = indicies[i];
+
+        std::memcpy(shuffledData[i], dataMat[index], cols * sizeof(double));
+        shuffledLabels[i][0] = labelsMat[index][0];
+    }
+
+    y.setMatrix(shuffledLabels, rows, 1);
+    X.setMatrix(shuffledData, rows, cols);
+}
+
 
 vector<pair<Matrix, Matrix>> DataLoader::trainValidTestSplit(unsigned int trainSize, unsigned int validSize, unsigned int testSize)
 {
     int totalSize = trainSize + validSize + testSize;
     
 
-    if (totalSize > labels.getRows())
+  /*  if (totalSize > labels.getRows())
     {
         // TODO: Handle exception
         throw - 1;
-    }
+    }*/
  
+    shuffleData();
+
     int randomStartRow = getRandomNumber(0, labels.getRows() - totalSize - 1);
 
     pair<Matrix, Matrix> train;
@@ -106,19 +174,29 @@ Returns:
 vector<pair<Matrix, Matrix>> DataLoader::miniBatchGenerator(unsigned int batchSize, const pair<Matrix, Matrix>& data)
 {
 
+
+
+    Matrix X = data.first;
+    Matrix y = data.second;
+
+    shuffleData(X, y);
+
     vector<pair<Matrix, Matrix>> stream;
 
     unsigned int dataSize, miniBatchAmount, featuresSize;
 
-    miniBatchAmount = data.second.getRows() / batchSize; // how many minibatches can be created
-    featuresSize = data.first.getColumns(); // data feature size
+    miniBatchAmount = X.getRows() / batchSize; // how many minibatches can be created
+    featuresSize = X.getColumns(); // data feature size
 
     int batchIndex = 0;
     int rowIndex = 0;
 
     double** dataMatrix, ** labelsMatrix;
-    dataMatrix = data.first.getMatrix();
-    labelsMatrix = data.second.getMatrix();
+    dataMatrix = X.getMatrix();
+    labelsMatrix = y.getMatrix();
+
+    
+
 
     for (int i = 0; i < miniBatchAmount; ++i)
     {

@@ -32,7 +32,7 @@ public:
 	std::array<Matrix, 4> backward(const Matrix& X, const Matrix& y, const Matrix& a_h, const Matrix& a_o);
 
 	void fit(Matrix& X, const Matrix& y,
-		const Matrix& validX, const Matrix& validY, const Matrix& testX, const Matrix& testY, int numEpochs=50, double learningRate=0.01);
+		 Matrix& validX, const Matrix& validY,  Matrix& testX, const Matrix& testY, int numEpochs=30, double learningRate=0.01);
 
 
 };

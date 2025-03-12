@@ -349,13 +349,13 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 		int colLogicalSize, colPhysicalSize;
 		colLogicalSize = 0;
 		colPhysicalSize = 1;
-
+		
 		double** matFromFile = new double* [rowsPhysicalSize];
 		
 		//int ROW_CNT = 0; // TODO: delete
 
 		int cnt = 0;
-		while (std::getline(in, row))
+		while (std::getline(in, row) and cnt <500)
 		{
 			cnt++;
 			std::stringstream ss(row);

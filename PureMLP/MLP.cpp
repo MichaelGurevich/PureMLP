@@ -137,13 +137,13 @@ void MLP::fit(Matrix& X, const Matrix& y,
 		for (pair<Matrix, Matrix>& trainPair : stream)
 		{
 
-			auto [a_w, a_o] = forward(trainPair.first); 
+			auto [a_h, a_o] = forward(trainPair.first); 
 
-			std::array<Matrix, 2> forwardOuput = forward(trainPair.first);
+			//std::array<Matrix, 2> forwardOuput = forward(trainPair.first);
 		
 
 			auto [d_loss__d_w_o, d_loss__d_b_o, d_loss__d_w_h, d_loss__d_b_h] = 
-				backward(trainPair.first, trainPair.second, forwardOuput[0], forwardOuput[1]);
+				backward(trainPair.first, trainPair.second, a_h, a_o);
 
 
 			w_h = w_h - learningRate * d_loss__d_w_h;

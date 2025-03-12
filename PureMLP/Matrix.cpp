@@ -426,6 +426,23 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 	return in;
 
 }
+
+// 
+std::ostream& operator<<(std::ostream& os, const Matrix& mat)
+{
+	for (int i = 0; i < mat.rows; ++i)
+	{
+		os << mat.matrix[i][0];
+		for (int j = 1; j < mat.columns; ++j)
+		{
+			os << ' ' << mat.matrix[i][j];
+		}
+		os << std::endl;
+	}
+	return os;
+}
+
+
 // ==================== End of Operators ====================
 
 void Matrix::printMat() const

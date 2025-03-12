@@ -6,21 +6,29 @@
 c'tor
 initialized weights and bais to random numbers according to the parmeters recived
 */
-MLP::MLP(int numFeatures, int numHidden, int numClasses)
+MLP::MLP(int numFeatures, int numHidden, int numClasses, bool filesInit)
 	: numFeatures(numFeatures), numHidden(numHidden), numClasses(numClasses) 
 {
 	
-	/*
+	if (!filesInit)
+	{
+		/*
 	Hidden layer - initialize weight and bais
 		w_h - numHiddem x numFeatures
 		b_h - 1 x numHidden
 	*/
-	w_h = Matrix(numHidden, numFeatures, true);
-	b_h = Matrix(1, numHidden, false);
-	
+		w_h = Matrix(numHidden, numFeatures, true);
+		b_h = Matrix(1, numHidden, false);
 
-	w_o = Matrix(numClasses, numHidden, true);
-	b_o = Matrix(1, numClasses, false);
+
+		w_o = Matrix(numClasses, numHidden, true);
+		b_o = Matrix(1, numClasses, false);
+	}
+	else
+	{
+		this->initFromFile();
+	}
+	
 }
 
 
@@ -38,36 +46,36 @@ std::array<Matrix, 2> MLP::forward(const Matrix& X) const
 
 
 	Matrix z_o = a_h * Matrix::transpose(w_o) + b_o;
-	Matrix a_o = Matrix::applyFunc(z_o, sigmoid);
+	Matrix a_o = z_o;
+	//Matrix a_o = Matrix::applyFunc(z_o, sigmoid);
 
+
+
+	for (int i = 0; i < z_o.getRows(); ++i)
+	{
+		double denominator = 0;
+		for (int j = 0; j < z_o.getColumns(); ++j)
+		{
+			denominator += std::pow(e, z_o[i][j]);
+		}
+
+		for (int k = 0; k < z_o.getColumns(); ++k)
+		{
+			a_o.getMatrix()[i][k] = std::pow(e, z_o[i][k]) / denominator;
+		}
+	}
 	
 
 	return { a_h, a_o };
 }
 
-/*std::tuple<Matrix, Matrix> MLP::forward(const Matrix& X) const
-{
-	// X [ num examples x 784 ]
-	// W_H [ Num hidden x 784 ]
-	// X * W_H [num Examples x num hidden ] 
-	// b_h [1 x num hidden]
 
-
-	Matrix z_h = X * Matrix::transpose(w_h) + b_h;
-	Matrix a_h = Matrix::applyFunc(z_h, sigmoid);
-
-
-	Matrix z_o = a_h * Matrix::transpose(w_o) + b_o;
-	Matrix a_o = Matrix::applyFunc(z_o, sigmoid);
-
-
-
-	return { a_h, a_o };
-}*/
 
 
 std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matrix& a_h, const Matrix& a_o)
 {
+
+
 
 	//double acc = calcAcc(y, predictedLabels(a_o));
 	//std::cout << "Acc: " << acc << "%" << std::endl;
@@ -127,7 +135,8 @@ void MLP::fit(Matrix& X, const Matrix& y,
 	testX = ((testX / 255) - 0.5) * 2; // Normalize data to [-1, 1]
 	validX = ((validX / 255) - 0.5) * 2; // Normalize data to [-1, 1]
 	
-	
+	double logMSE, logTrainAcc, logValidAcc;
+	logMSE = logTrainAcc = logValidAcc = -1;
 
 	for (int i = 0; i < numEpochs; ++i)
 	{
@@ -160,12 +169,30 @@ void MLP::fit(Matrix& X, const Matrix& y,
 		trainAcc *= 100;
 		validAcc *= 100;
 
+		
+
+
 		cout << "Epoch: " << i + 1
 			<< " | Train Mse: " << trainMse
 			<< " | Train Acc: " << trainAcc << "%"
 			<< " | Valid Acc: " << validAcc << "%" << endl;
 		
+		logMSE = trainMse;
+		logTrainAcc = trainAcc;
+		logValidAcc = validAcc;
 	}
+
+	
+
+	ofstream MyFile("log.txt");
+
+	// Write to the file
+	MyFile << "Train MSE: " << logMSE << " | Train accuracy: " << logTrainAcc << " | Valid accuracy: " << logValidAcc;
+
+	// Close the file
+	MyFile.close();
+
+	writeWeightsBiasToFile();
 }
 
 double MLP::mseLoss(const Matrix& targets, const Matrix& predicts) 
@@ -221,4 +248,80 @@ std::array<double, 2> MLP::computeMseAndAcc(const MLP& mlp, const Matrix & X, co
 
 	return { mse, acc };
 
+}
+
+
+void MLP::writeWeightsBiasToFile()
+{
+	ofstream files[4];
+
+	std::array<const Matrix*, 4> matrices = { &w_h, &b_h, &w_o, &b_o };
+
+	std::array<std::string, 4> filenames = {
+		"hidden_weights.weights",
+		"hidden_bias.bias",
+		"output_weights.weights",
+		"output_bias.bias",
+	};
+	
+	for (int i = 0; i < 4; ++i)
+	{
+		files[i].open(filenames[i]);
+
+		if (!files[i].is_open())
+			throw - 1;
+
+		files[i] << *matrices[i];
+
+		files[i].close();
+	}
+}
+
+void MLP::initFromFile()
+{
+	std::ifstream files[4];
+
+	std::array<Matrix*, 4> matrices = { &w_h, &b_h, &w_o, &b_o };
+
+	std::array<std::string, 4> filenames = {
+		"hidden_weights.weights",
+		"hidden_bias.bias",
+		"output_weights.weights",
+		"output_bias.bias",
+	};
+
+	for (int i = 0; i < 4; ++i)
+	{
+		files[i].open(filenames[i]);
+
+		if (!files[i].is_open())
+			throw - 1;
+
+		files[i] >> *matrices[i];
+
+		files[i].close();
+	}
+}
+
+
+int MLP::predict(std::vector<int> examp) const
+{
+	Matrix input(examp);
+
+	input = ((input / 255) - 0.5) * 2;
+
+	auto [_, a_o] = forward(input);
+	
+	return maxIndex(a_o[0], 10);
+}
+
+
+double MLP::softmax(double x, double* z_o_i, unsigned int size)
+{
+	double denominator = 0;
+
+	for (int i = 0; i < size; ++i)
+		denominator += std::pow(e, z_o_i[i]);
+
+	return std::pow(e, x) / denominator;
 }

@@ -25,6 +25,7 @@ public:
 
 
 	const Matrix& getLabels() const { return labels; }
+	const Matrix& getData() const { return data; }
 
 	
 

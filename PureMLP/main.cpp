@@ -2,27 +2,71 @@
 #include "utils.h"
 #include "DataLoader.h"
 #include "MLP.h"
-
+#include <iostream>
 
 
 #include <SFML/Graphics.hpp>
-#include <iostream>
+
 #include <vector>
-#include <cmath> // for sqrt
+#include <cmath>
+#include <algorithm>
+
+// Create a brush texture with a hard center and linear fall-off.
+// The inner 70% of the radius is full white, then linearly fades to transparent.
+sf::Texture createBrushTexture(unsigned int diameter)
+{
+    sf::Image brushImage;
+    brushImage.create(diameter, diameter, sf::Color::Transparent);
+    float radius = diameter / 2.0f;
+    float innerRadius = radius * 0.7f; // full intensity within 70% of radius
+    sf::Vector2f center(radius, radius);
+    for (unsigned int x = 0; x < diameter; ++x)
+    {
+        for (unsigned int y = 0; y < diameter; ++y)
+        {
+            float dx = x - center.x;
+            float dy = y - center.y;
+            float distance = std::sqrt(dx * dx + dy * dy);
+            sf::Uint8 alpha = 0;
+            if (distance <= innerRadius)
+            {
+                alpha = 255;
+            }
+            else if (distance <= radius)
+            {
+                float factor = 1.0f - ((distance - innerRadius) / (radius - innerRadius));
+                alpha = static_cast<sf::Uint8>(255 * factor);
+            }
+            else
+            {
+                alpha = 0;
+            }
+            brushImage.setPixel(x, y, sf::Color(255, 255, 255, alpha));
+        }
+    }
+    sf::Texture brushTexture;
+    if (!brushTexture.loadFromImage(brushImage))
+    {
+        std::cerr << "Failed to load brush texture from image!" << std::endl;
+    }
+    return brushTexture;
+}
 
 int main()
 {
+    MLP model(784, 40, 10, true);
+    model.initFromFile();
+
     // Canvas and window dimensions
-    const int canvasSize = 600;           // Drawing area size (600x600)
+    const int canvasSize = 600;           // Drawing area (600x600)
     const int buttonAreaHeight = 50;      // Extra area for buttons
     const int windowWidth = canvasSize;
     const int windowHeight = canvasSize + buttonAreaHeight;
 
-    // Button dimensions and gap
+    // Button dimensions and layout
     const int buttonWidth = 100;
     const int buttonHeight = 30;
     const int buttonGap = 20;
-    // Calculate starting X so that the two buttons (total width = 2*buttonWidth + buttonGap) are centered.
     const int totalButtonsWidth = 2 * buttonWidth + buttonGap;
     const int startX = (windowWidth - totalButtonsWidth) / 2;
     const int buttonY = canvasSize + (buttonAreaHeight - buttonHeight) / 2;
@@ -31,9 +75,10 @@ int main()
     sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "Digit Recognizer Canvas");
     window.setFramerateLimit(60);
 
-    // Create a render texture for the drawing canvas
+    // Create a render texture for the drawing canvas and clear to black
     sf::RenderTexture canvasTexture;
-    if (!canvasTexture.create(canvasSize, canvasSize)) {
+    if (!canvasTexture.create(canvasSize, canvasSize))
+    {
         std::cerr << "Error creating canvas render texture!" << std::endl;
         return -1;
     }
@@ -50,17 +95,18 @@ int main()
     doneButton.setFillColor(sf::Color(200, 200, 200)); // light gray
     doneButton.setPosition(startX + buttonWidth + buttonGap, buttonY);
 
-    // Load a font (ensure "arial.ttf" is in your working directory or use another font)
+    // Load a font (ensure "arial.ttf" is available or change the filename)
     sf::Font font;
     bool fontLoaded = font.loadFromFile("arial.ttf");
-    if (!fontLoaded) {
+    if (!fontLoaded)
+    {
         std::cerr << "Warning: Could not load 'arial.ttf'. Button texts will not be displayed." << std::endl;
     }
 
     // Setup button texts if font loaded
     sf::Text clearText, doneText;
-    if (fontLoaded) {
-        // Clear button text
+    if (fontLoaded)
+    {
         clearText.setFont(font);
         clearText.setString("Clear");
         clearText.setCharacterSize(20);
@@ -70,7 +116,6 @@ int main()
         clearText.setPosition(clearButton.getPosition().x + clearButton.getSize().x / 2,
             clearButton.getPosition().y + clearButton.getSize().y / 2);
 
-        // Done button text
         doneText.setFont(font);
         doneText.setString("Done");
         doneText.setCharacterSize(20);
@@ -81,12 +126,18 @@ int main()
             doneButton.getPosition().y + doneButton.getSize().y / 2);
     }
 
+    // Create a brush texture with a hard center.
+    const unsigned int brushDiameter = 70; // increased brush size for thicker strokes
+    sf::Texture brushTexture = createBrushTexture(brushDiameter);
+    sf::Sprite brushSprite(brushTexture);
+    // Center the brush sprite on its texture.
+    brushSprite.setOrigin(brushDiameter / 2.0f, brushDiameter / 2.0f);
+
     bool isDrawing = false;
-    // Variables for continuous line drawing
     sf::Vector2i lastPos;
     bool firstPoint = true;
 
-    // Sprite to display the canvas texture
+    // Sprite for displaying the canvas texture
     sf::Sprite canvasSprite(canvasTexture.getTexture());
 
     while (window.isOpen())
@@ -97,104 +148,104 @@ int main()
             if (event.type == sf::Event::Closed)
                 window.close();
 
-            // Handle mouse button pressed
+            // Handle mouse button press events
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
             {
                 int mouseX = event.mouseButton.x;
                 int mouseY = event.mouseButton.y;
 
-                // If click is inside the canvas area, start drawing
-                if (mouseY < canvasSize) {
+                if (mouseY < canvasSize) // Inside drawing area: start drawing
+                {
                     isDrawing = true;
-                    firstPoint = true; // start a new stroke
+                    firstPoint = true;
                 }
-                // If click is in the button area, check which button is pressed
-                else {
-                    // Check if Clear button is clicked
-                    if (clearButton.getGlobalBounds().contains(mouseX, mouseY)) {
-                        // Clear the canvas: fill with black and update texture
+                else // Check if a button is pressed
+                {
+                    if (clearButton.getGlobalBounds().contains(mouseX, mouseY))
+                    {
+                        // Clear the canvas to black
                         canvasTexture.clear(sf::Color::Black);
                         canvasTexture.display();
                     }
-                    // Check if Done button is clicked
-                    else if (doneButton.getGlobalBounds().contains(mouseX, mouseY)) {
-                        // Scale down the canvas to 28x28 pixels using a RenderTexture
+                    else if (doneButton.getGlobalBounds().contains(mouseX, mouseY))
+                    {
+                        // Scale the canvas down to 28x28 pixels
                         sf::RenderTexture scaledTexture;
-                        if (!scaledTexture.create(28, 28)) {
+                        if (!scaledTexture.create(28, 28))
+                        {
                             std::cerr << "Error creating scaled render texture!" << std::endl;
                             return -1;
                         }
                         sf::Sprite canvasForScaling(canvasTexture.getTexture());
-                        // Calculate scale factor from canvas (600) to 28
                         float scaleFactor = 28.f / canvasSize;
                         canvasForScaling.setScale(scaleFactor, scaleFactor);
                         scaledTexture.clear(sf::Color::Black);
                         scaledTexture.draw(canvasForScaling);
                         scaledTexture.display();
 
-                        // Retrieve the scaled image and convert it to a 784-element vector
+                        // Convert the scaled image into a 784-element vector (using red channel)
                         sf::Image scaledImage = scaledTexture.getTexture().copyToImage();
                         std::vector<int> digitVector;
                         digitVector.reserve(28 * 28);
-                        for (unsigned int y = 0; y < 28; y++) {
-                            for (unsigned int x = 0; x < 28; x++) {
+                        for (unsigned int y = 0; y < 28; y++)
+                        {
+                            for (unsigned int x = 0; x < 28; x++)
+                            {
                                 sf::Color color = scaledImage.getPixel(x, y);
-                                // Use the red channel (grayscale) for intensity
                                 int intensity = color.r;
                                 digitVector.push_back(intensity);
                             }
                         }
 
-                        // Print the 784-element vector (formatted as 28 rows)
-                        std::cout << "Digit vector (784 values):" << std::endl;
-                        for (size_t i = 0; i < digitVector.size(); i++) {
+                        int prediction = model.predict(digitVector);
+                        std::cout << prediction << std::endl;
+
+                        /*std::cout << "Digit vector (784 values):" << std::endl;
+                        for (size_t i = 0; i < digitVector.size(); i++)
+                        {
                             std::cout << digitVector[i] << " ";
                             if ((i + 1) % 28 == 0)
                                 std::cout << std::endl;
-                        }
+                        }*/
                     }
                 }
             }
 
-            // Stop drawing on mouse button release
+            // Stop drawing when the mouse button is released
             if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left)
             {
                 isDrawing = false;
-                firstPoint = true; // reset for next stroke
+                firstPoint = true;
             }
         }
 
-        // Draw continuously while the left mouse button is held down on the canvas
+        // If drawing is active, interpolate between positions and draw the brush sprite.
+        // We use a fixed step spacing of brushDiameter/4 to ensure heavy overlap.
         if (isDrawing)
         {
             sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-            if (mousePos.y < canvasSize) {
-                if (firstPoint) {
+            if (mousePos.y < canvasSize)
+            {
+                if (firstPoint)
+                {
                     lastPos = mousePos;
                     firstPoint = false;
                 }
-                else {
-                    // Compute differences between current and previous positions
+                else
+                {
                     float dx = mousePos.x - lastPos.x;
                     float dy = mousePos.y - lastPos.y;
                     float distance = std::sqrt(dx * dx + dy * dy);
-
-                    // Determine the number of steps to interpolate along the line
-                    int steps = static_cast<int>(distance);
-                    if (steps == 0)
-                        steps = 1; // avoid division by zero
-
-                    // Draw intermediate circles along the line to create a continuous stroke
-                    for (int i = 0; i <= steps; i++) {
+                    // Use a fixed spacing (e.g., brushDiameter/4) for interpolation.
+                    int steps = std::max(1, static_cast<int>(distance / (brushDiameter / 4.0f)));
+                    for (int i = 0; i <= steps; i++)
+                    {
                         float t = i / static_cast<float>(steps);
                         int x = static_cast<int>(lastPos.x + t * dx);
                         int y = static_cast<int>(lastPos.y + t * dy);
-
-                        sf::CircleShape brush(10); // Brush radius
-                        // Semi-transparent white brush to gradually build intensity
-                        brush.setFillColor(sf::Color(255, 255, 255, 50));
-                        brush.setPosition(x - 10, y - 10);
-                        canvasTexture.draw(brush, sf::BlendAlpha);
+                        brushSprite.setPosition(static_cast<float>(x), static_cast<float>(y));
+                        // Draw with additive blending so overlapping stamps accumulate intensity.
+                        canvasTexture.draw(brushSprite, sf::BlendAdd);
                     }
                     lastPos = mousePos;
                 }
@@ -202,13 +253,14 @@ int main()
             }
         }
 
-        // Update the canvas sprite and render everything
+        // Render the updated canvas and UI
         canvasSprite.setTexture(canvasTexture.getTexture());
         window.clear(sf::Color::Black);
         window.draw(canvasSprite);
         window.draw(clearButton);
         window.draw(doneButton);
-        if (fontLoaded) {
+        if (fontLoaded)
+        {
             window.draw(clearText);
             window.draw(doneText);
         }
@@ -219,19 +271,42 @@ int main()
 }
 
 
+/*void print28x28(const double* arr);
+
+void print28x28(const double* arr) {
+    for (int row = 0; row < 28; ++row) {
+        for (int col = 0; col < 28; ++col) {
+            int index = row * 28 + col;
+
+            std::cout << arr[index] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+*/
+
 
 /*int main() {
-   initSeed();
-
-  
-    MLP model (784, 40, 10);
-
-    DataLoader dl("mnist_data.txt", "mnist_labels.txt");
    
 
+    //initSeed();
+
+    MLP model(784, 40, 10, true);
+    model.initFromFile();
+
+    
+
+
+    DataLoader dl("mnist_data.txt", "mnist_labels.txt");
+
+    //print28x28(dl.getData()[0]);
+
+ 
+
+    
+
     std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(55000,  5000, 100);
-
-
+    //std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(100,  100, 100);
 
     model.fit(splits[0].first, splits[0].second, splits[1].first, splits[1].second, splits[2].first, splits[2].second);
     
@@ -240,4 +315,4 @@ int main()
     
    
     return 0;
-}*/
+} */

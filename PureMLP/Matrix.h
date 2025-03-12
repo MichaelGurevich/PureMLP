@@ -4,6 +4,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <fstream>  // For file streams
+
 class Matrix 
 {
 private:
@@ -35,6 +37,44 @@ private:
 public:
 	Matrix(unsigned int rows = 0, unsigned int cols = 0, bool initRandom=false); // c.tor, the initRandom flag is to whether to init the matrix with random numbers
 	Matrix(unsigned int rows, unsigned int cols, double** matrix) : rows(rows), columns(cols), matrix(matrix) {} 
+	
+	template<typename T> 
+	Matrix(std::vector<T> vect)
+	{
+		this->columns = vect.size();
+
+		double** newMatrix = new double* [1];
+		newMatrix[0] = new double[this->columns];
+
+		for (int i = 0; i < this->columns; ++i)
+			newMatrix[0][i] = static_cast<double> (vect[i]);
+		
+		this->rows = 1;
+		this->matrix = newMatrix;
+	}
+
+
+	template<typename T>
+	Matrix(std::vector<std::vector<T>> mat)
+	{
+		this->rows = mat.size();
+		this->columns = mat[0].size();
+
+		double** newMatrix = new double* [this->rows];
+		
+
+		for (int i = 0; i < this->rows; ++i)
+		{
+			newMatrix[i] = new double[this->columns];
+			for (int j = 0; j < this->columns; ++j)
+			{
+				newMatrix[i][j] = static_cast<double> (mat[i][j]);
+			}
+		}
+
+		this->matrix = newMatrix;
+	}
+
 
 	Matrix(Matrix&& mat) noexcept; // move c'tor
 
@@ -72,7 +112,7 @@ public:
 	
 
 
-		// & operator - elemet-wise multiplication
+		// & operator - element-wise multiplication
 
 	friend Matrix operator& (const Matrix& mat1, const Matrix& mat2) { return Matrix::linearOperation(mat1, mat2, multiplication); }
 
@@ -86,6 +126,9 @@ public:
 
 		// >> Operator
 	friend std::istream& operator>>(std::istream& in, Matrix& mat);
+
+		// << Opeartor
+	friend std::ostream& operator<<(std::ostream& os, const Matrix& mat);
 	
 
 	void transpose(); // transposes the matrix on which called on

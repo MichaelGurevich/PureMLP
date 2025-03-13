@@ -42,7 +42,8 @@ std::array<Matrix, 2> MLP::forward(const Matrix& X) const
 
 
 	Matrix z_h = X * Matrix::transpose(w_h) + b_h;
-	Matrix a_h = Matrix::applyFunc(z_h, sigmoid);
+	//Matrix a_h = Matrix::applyFunc(z_h, sigmoid);
+	Matrix a_h = Matrix::applyFunc(z_h, [](double x) {return x > 0 ? x : 0; });
 
 
 	Matrix z_o = a_h * Matrix::transpose(w_o) + b_o;
@@ -105,7 +106,8 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 	
 	Matrix d_z_h__d_w_h = X; // [ n examples x features ]
 
-	Matrix d_a_h__d_z_h = a_h & (1 - a_h); // [ n examples x n hidden ] -
+	//Matrix d_a_h__d_z_h = a_h & (1 - a_h); // [ n examples x n hidden ] -
+	Matrix d_a_h__d_z_h = Matrix::applyFunc(a_h, [](double x) {return x > 0 ? 1 : 0; }); // ReLU derivative
 	 
 	Matrix d_z_o__d_a_h = w_o; // [ n output x n hidden ] - 
 
@@ -141,7 +143,7 @@ void MLP::fit(Matrix& X, const Matrix& y,
 	for (int i = 0; i < numEpochs; ++i)
 	{
 	
-		std::vector<pair<Matrix, Matrix>> stream = DataLoader::miniBatchGenerator(100, std::make_pair(X, y));
+		std::vector<pair<Matrix, Matrix>> stream = DataLoader::miniBatchGenerator(64, std::make_pair(X, y));
 
 		for (pair<Matrix, Matrix>& trainPair : stream)
 		{
@@ -164,8 +166,8 @@ void MLP::fit(Matrix& X, const Matrix& y,
 		}
 		
 		// Epoch logging
-		auto [trainMse, trainAcc] = computeMseAndAcc(*this, X, y, 100);
-		auto [validMse, validAcc] = computeMseAndAcc(*this, validX, validY, 100);
+		auto [trainMse, trainAcc] = computeMseAndAcc(*this, X, y, 64);
+		auto [validMse, validAcc] = computeMseAndAcc(*this, validX, validY, 64);
 		trainAcc *= 100;
 		validAcc *= 100;
 

@@ -355,7 +355,7 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 		//int ROW_CNT = 0; // TODO: delete
 
 		int cnt = 0;
-		while (std::getline(in, row) and cnt <500)
+		while (std::getline(in, row))
 		{
 			cnt++;
 			std::stringstream ss(row);

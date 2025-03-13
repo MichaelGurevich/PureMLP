@@ -13,7 +13,7 @@
 
 // Create a brush texture with a hard center and linear fall-off.
 // The inner 70% of the radius is full white, then linearly fades to transparent.
-/*sf::Texture createBrushTexture(unsigned int diameter)
+sf::Texture createBrushTexture(unsigned int diameter)
 {
     sf::Image brushImage;
     brushImage.create(diameter, diameter, sf::Color::Transparent);
@@ -127,7 +127,7 @@ int main()
     }
 
     // Create a brush texture with a hard center.
-    const unsigned int brushDiameter = 70; // increased brush size for thicker strokes
+    const unsigned int brushDiameter = 72; // increased brush size for thicker strokes
     sf::Texture brushTexture = createBrushTexture(brushDiameter);
     sf::Sprite brushSprite(brushTexture);
     // Center the brush sprite on its texture.
@@ -206,7 +206,7 @@ int main()
                             std::cout << digitVector[i] << " ";
                             if ((i + 1) % 28 == 0)
                                 std::cout << std::endl;
-                        }
+                        }*/
                     }
                 }
             }
@@ -268,7 +268,7 @@ int main()
     }
 
     return 0;
-}*/
+}
 
 
 /*void print28x28(const double* arr);
@@ -286,27 +286,24 @@ void print28x28(const double* arr) {
 */
 
 
-int main() {
+/*int main() {
    
 
     //initSeed();
 
-    MLP model(784, 40, 10, true);
-    model.initFromFile();
+    MLP model(784, 50, 10, false);
+    //model.initFromFile();
 
     
 
 
     DataLoader dl("mnist_data.txt", "mnist_labels.txt");
-
+    std::cout << "Finished reading data!" << "\n";
     //print28x28(dl.getData()[0]);
-
- 
-
     
 
-   // std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(55000,  5000, 100);
-    std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(100,  100, 100);
+    std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(55040,  5120, 100);
+    //std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(100,  100, 100);
 
     model.fit(splits[0].first, splits[0].second, splits[1].first, splits[1].second, splits[2].first, splits[2].second);
     
@@ -315,4 +312,4 @@ int main() {
     
    
     return 0;
-} 
+} */

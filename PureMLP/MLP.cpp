@@ -40,13 +40,17 @@ std::array<Matrix, 2> MLP::forward(const Matrix& X) const
 	// X * W_H [num Examples x num hidden ] 
 	// b_h [1 x num hidden]
 
+	//X.printMat();
 
 	Matrix z_h = X * Matrix::transpose(w_h) + b_h;
+	//z_h.printMat();
+
 	//Matrix a_h = Matrix::applyFunc(z_h, sigmoid);
 	Matrix a_h = Matrix::applyFunc(z_h, [](double x) {return x > 0 ? x : 0; });
 
-
+	
 	Matrix z_o = a_h * Matrix::transpose(w_o) + b_o;
+	
 	Matrix a_o = z_o;
 	//Matrix a_o = Matrix::applyFunc(z_o, sigmoid);
 
@@ -62,11 +66,12 @@ std::array<Matrix, 2> MLP::forward(const Matrix& X) const
 
 		for (int k = 0; k < z_o.getColumns(); ++k)
 		{
-			a_o.getMatrix()[i][k] = std::pow(e, z_o[i][k]) / denominator;
+			//a_o.getMatrix()[i][k] = std::pow(e, z_o[i][k]) / denominator;
+			a_o.getMatrix()[i][k] = std::pow(e, z_o[i][k]) / 1;
 		}
 	}
 	
-
+	//a_o.printMat();
 	return { a_h, a_o };
 }
 
@@ -88,17 +93,24 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 	//  output layer 
 	Matrix d_z_o__d_w_o = a_h;
 	Matrix d_a_o__d_z_o = a_o & (1 - a_o);
+	Matrix m = a_o - y_onehot;
+	//m.printMat();
 	Matrix d_loss__d_a_o = 2 * (a_o - y_onehot) / y_onehot.getColumns();
+	
+	//Matrix d_loss__d_a_o = a_o;
 
+
+	
 
 	Matrix delta_out = d_a_o__d_z_o & d_loss__d_a_o; // [ n examples x n output ]
 
-
+	//d_loss__d_a_o.printMat();
 	Matrix d_loss__d_w_o = Matrix::transpose(delta_out) * d_z_o__d_w_o;
-
-	Matrix d_loss__d_b_o = Matrix::reduce(delta_out, 0, '+');
-
 	
+	//delta_out.printMat();
+	
+	Matrix d_loss__d_b_o = Matrix::reduce(delta_out, 0, '+');
+	//d_loss__d_b_o.printMat();
 
 
 	// hidden layer
@@ -116,7 +128,10 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 
 
 	Matrix d_loss__d_w_h = Matrix::transpose((d_loss__d_a_h & d_a_h__d_z_h)) * d_z_h__d_w_h;
+
+	//(d_loss__d_a_h & d_a_h__d_z_h).printMat();
 	Matrix d_loss__d_b_h = Matrix::reduce(d_loss__d_a_h & d_a_h__d_z_h, 0, '+');
+	//d_loss__d_b_h.printMat();
 	
 
 	return {

@@ -173,7 +173,8 @@ Matrix operator-(double scalar, const Matrix& mat)
 			newMat[i][j] = scalar - matMat[i][j];
 		}
 	}
-
+	//Matrix m(matRows, matCols, newMat);
+	//m.printMat();
 	return Matrix(matRows, matCols, newMat);
 }
 
@@ -355,7 +356,7 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 		//int ROW_CNT = 0; // TODO: delete
 
 		int cnt = 0;
-		while (std::getline(in, row))
+		while (std::getline(in, row) and cnt < 500)
 		{
 			cnt++;
 			std::stringstream ss(row);
@@ -447,14 +448,14 @@ std::ostream& operator<<(std::ostream& os, const Matrix& mat)
 
 void Matrix::printMat() const
 {
-	std::cout << std::fixed << std::setprecision(1);
+	//std::cout << std::fixed << std::setprecision(1);
 	for (int i = 0; i < rows; ++i)
 	{
 		for (int j = 0; j < columns; ++j)
 		{
 			if (matrix[i][j] >= 0)
 				std::cout << " ";
-			std::cout << std::setw(5) << std::left << matrix[i][j] << " ";
+			std::cout << /*std::setw(5) << std::left <<*/ matrix[i][j] << " ";
 		}
 		std::cout << std::endl;
 	}
@@ -517,8 +518,16 @@ Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::func
 		{
 			outputMat[i] = new double[newCols];
 			for (int j = 0; j < newCols; ++j)
+			{
 				outputMat[i][j] = op(mat1.matrix[i][j], mat2.matrix[i][j]);
+				outputMat[i][j] = 1;
+				//std::cout << outputMat[i][j] ;
+			}
+			
 		}
+		//Matrix m(newRows, newCols, outputMat);
+		//m.printMat();
+		
 	}
 
 	else if ((mat1.rows == 1 or mat2.rows == 1) and mat1.columns == mat2.columns) // matrix and row vector -> broadcast the vector 
@@ -535,8 +544,11 @@ Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::func
 		{
 			outputMat[i] = new double[newCols];
 			for (int j = 0; j < newCols; ++j)
-				outputMat[i][j] = op(matrix[i][j], rowVector[j]);
+				//outputMat[i][j] = op(matrix[i][j], rowVector[j]);
+				outputMat[i][j] = 1;
+			
 		}
+		
 
 	}
 	else if ((mat1.columns == 1 or mat2.columns == 1) and mat1.rows == mat2.rows) // matrix and column vector -> broadcast the vector
@@ -563,6 +575,9 @@ Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::func
 		throw - 1;
 	}
 
+	
+	//Matrix m(newRows, newCols, outputMat);
+	//m.printMat();
 	return Matrix(newRows, newCols, outputMat);
 }
 
@@ -672,7 +687,7 @@ Matrix Matrix::reduce(const Matrix& mat, int axis, char op)
 	switch (op)
 	{
 	case '+':
-		return reduceHelper(mat, axis, addtion);
+		return reduceHelper(mat, axis, additionReduce);
 		break;
 	case '*':
 		return reduceHelper(mat, axis, multiplication);
@@ -684,7 +699,7 @@ Matrix Matrix::reduce(const Matrix& mat, int axis, char op)
 
 }
 
-Matrix Matrix::reduceHelper(const Matrix& mat, int axis, std::function<double(double, double)> op)
+Matrix Matrix::reduceHelper(const Matrix& mat, int axis, std::function<void(double&, double)> op)
 {
 	if (axis == 0)
 	{
@@ -693,13 +708,16 @@ Matrix Matrix::reduceHelper(const Matrix& mat, int axis, std::function<double(do
 
 		for (int i = 0; i < mat.columns; ++i)
 		{
-			int sum = 0;
+			double sum = 0;
 			for (int j = 0; j < mat.rows; ++j)
 			{
 				op(sum, mat.matrix[i][j]);
 			}
 			newMat[0][i] = sum;
 		}
+		
+		//Matrix m(1, mat.columns, newMat);
+		//m.printMat();
 		return Matrix(1, mat.columns, newMat);
 	}
 	else if (axis == 1)
@@ -709,13 +727,15 @@ Matrix Matrix::reduceHelper(const Matrix& mat, int axis, std::function<double(do
 		for (int i = 0; i < mat.rows; ++i)
 		{
 			newMat[i] = new double[1];
-			int sum = 0;
+			double sum = 0;
 			for (int j = 0; j < mat.columns; ++j)
 			{
 				op(sum, mat.matrix[i][j]);
 			}
 			newMat[i][0] = sum;
 		}
+
+		//Matrix(mat.rows, 1, newMat).printMat();
 		return Matrix(mat.rows, 1, newMat);
 	}
 	else

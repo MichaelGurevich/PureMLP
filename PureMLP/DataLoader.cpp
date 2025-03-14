@@ -4,6 +4,8 @@
 #include "utils.h"
 
 
+constexpr int NUM_CLASSES = 10;
+
 DataLoader::DataLoader(string dataFileName, string labelsFileName)
 {
     std::ifstream labelsFile(labelsFileName);
@@ -34,14 +36,14 @@ Matrix DataLoader::labelsToOneHot(const Matrix& labels)
 
     for (int i = 0; i < rows; ++i)
     {
-        oneHotMat[i] = new double[10] {};
+        oneHotMat[i] = new double[NUM_CLASSES] {};
         
         int label = labelsMat[i][0];
 
         oneHotMat[i][label] = 1;
     }
 
-    return Matrix(rows, 10, oneHotMat);
+    return Matrix(rows, NUM_CLASSES, oneHotMat);
 }
 
 void DataLoader::shuffleData()

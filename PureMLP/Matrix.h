@@ -16,6 +16,7 @@ private:
 
 	static constexpr double addtion(double a, double b) { return a + b; }
 	static constexpr double subraction(double a, double b) { return a - b; }
+	static constexpr void additionReduce(double& output, double x) {  output += x; }
 	static constexpr double multiplication(double a, double b) { return a * b; }
 	static constexpr double division(double a, double b)
 	{ 
@@ -31,7 +32,7 @@ private:
 	void linearOperation(const Matrix& mat, std::function<double(double, double)> op);
 	void applyScalarOperation(double scalar, std::function<double(double, double)> op);
 
-	static Matrix reduceHelper(const Matrix& mat, int axis, std::function<double(double, double)> op);
+	static Matrix reduceHelper(const Matrix& mat, int axis, std::function<void(double&, double)> op);
 	
 
 public:

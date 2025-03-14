@@ -1,5 +1,6 @@
 #pragma once
 #include <random>
+#include <iostream>
 
 extern unsigned long int seed;
 extern std::mt19937 global_rng;
@@ -30,8 +31,10 @@ int maxIndex(const T* arr, int size)
 		{
 			maxIndex = i;
 			max = arr[i];
+			
 		}
 	}
+	//std::cout << arr[maxIndex] * 100 << "% ";
 	return maxIndex;
 }
 

@@ -447,14 +447,15 @@ std::ostream& operator<<(std::ostream& os, const Matrix& mat)
 
 void Matrix::printMat() const
 {
-	std::cout << std::fixed << std::setprecision(1);
+	//std::cout << std::fixed << std::setprecision(1);
 	for (int i = 0; i < rows; ++i)
 	{
 		for (int j = 0; j < columns; ++j)
 		{
 			if (matrix[i][j] >= 0)
 				std::cout << " ";
-			std::cout << std::setw(5) << std::left << matrix[i][j] << " ";
+			//std::cout << std::setw(5) << std::left << matrix[i][j] << " ";
+			std::cout << matrix[i][j] << " ";
 		}
 		std::cout << std::endl;
 	}
@@ -562,7 +563,8 @@ Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::func
 			// throw and exception
 		throw - 1;
 	}
-
+	//Matrix m(newRows, newCols, outputMat);
+	//m.printMat();
 	return Matrix(newRows, newCols, outputMat);
 }
 
@@ -672,10 +674,10 @@ Matrix Matrix::reduce(const Matrix& mat, int axis, char op)
 	switch (op)
 	{
 	case '+':
-		return reduceHelper(mat, axis, addtion);
+		return reduceHelper(mat, axis, [](double& sum, const double x) {sum += x; });
 		break;
 	case '*':
-		return reduceHelper(mat, axis, multiplication);
+		return reduceHelper(mat, axis, [](double& mult, const double x) {mult *= x; });
 		break;
 	default:
 		throw - 1;
@@ -684,32 +686,33 @@ Matrix Matrix::reduce(const Matrix& mat, int axis, char op)
 
 }
 
-Matrix Matrix::reduceHelper(const Matrix& mat, int axis, std::function<double(double, double)> op)
+
+Matrix Matrix::reduceHelper(const Matrix& mat, int axis, std::function<void(double&, const double)> op)
 {
-	if (axis == 0)
+	if (axis == ALONG_Y)
 	{
 		double** newMat = new double* [1];
 		newMat[0] = new double[mat.columns];
 
-		for (int i = 0; i < mat.columns; ++i)
+		for (int i = 0; i < mat.columns; ++i) // reduce to a row vector
 		{
-			int sum = 0;
+			double sum = 0;
 			for (int j = 0; j < mat.rows; ++j)
 			{
-				op(sum, mat.matrix[i][j]);
+				op(sum, mat.matrix[j][i]);
 			}
 			newMat[0][i] = sum;
 		}
 		return Matrix(1, mat.columns, newMat);
 	}
-	else if (axis == 1)
+	else if (axis == ALONG_X)
 	{
 		double** newMat = new double* [mat.rows];
 
 		for (int i = 0; i < mat.rows; ++i)
 		{
 			newMat[i] = new double[1];
-			int sum = 0;
+			double sum = 0;
 			for (int j = 0; j < mat.columns; ++j)
 			{
 				op(sum, mat.matrix[i][j]);
@@ -721,6 +724,7 @@ Matrix Matrix::reduceHelper(const Matrix& mat, int axis, std::function<double(do
 	else
 		throw - 1;
 }
+
 
 double Matrix::mean(const Matrix& mat) 
 {
@@ -740,3 +744,5 @@ void Matrix::setMatrix(double** mat, int rows, int cols)
 	this->rows = rows;
 	this->columns = cols;
 }
+
+

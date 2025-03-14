@@ -54,11 +54,11 @@ sf::Texture createBrushTexture(unsigned int diameter)
 
 int main()
 {
-    MLP model(784, 40, 10, true);
+    MLP model(784, 50, 10, true);
     model.initFromFile();
 
     // Canvas and window dimensions
-    const int canvasSize = 600;           // Drawing area (600x600)
+    const int canvasSize = 400;           // Drawing area (600x600)
     const int buttonAreaHeight = 50;      // Extra area for buttons
     const int windowWidth = canvasSize;
     const int windowHeight = canvasSize + buttonAreaHeight;
@@ -127,7 +127,7 @@ int main()
     }
 
     // Create a brush texture with a hard center.
-    const unsigned int brushDiameter = 72; // increased brush size for thicker strokes
+    const unsigned int brushDiameter = 60; // increased brush size for thicker strokes
     sf::Texture brushTexture = createBrushTexture(brushDiameter);
     sf::Sprite brushSprite(brushTexture);
     // Center the brush sprite on its texture.
@@ -200,13 +200,6 @@ int main()
                         int prediction = model.predict(digitVector);
                         std::cout << prediction << std::endl;
 
-                        /*std::cout << "Digit vector (784 values):" << std::endl;
-                        for (size_t i = 0; i < digitVector.size(); i++)
-                        {
-                            std::cout << digitVector[i] << " ";
-                            if ((i + 1) % 28 == 0)
-                                std::cout << std::endl;
-                        }*/
                     }
                 }
             }
@@ -289,9 +282,9 @@ void print28x28(const double* arr) {
 /*int main() {
    
 
-    //initSeed();
+    initSeed();
 
-    MLP model(784, 50, 10, false);
+    MLP model(784, 70, 10, false);
     //model.initFromFile();
 
     
@@ -302,10 +295,10 @@ void print28x28(const double* arr) {
     //print28x28(dl.getData()[0]);
     
 
-    std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(55040,  5120, 100);
+    std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(64832,  5120, 0);
     //std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(100,  100, 100);
 
-    model.fit(splits[0].first, splits[0].second, splits[1].first, splits[1].second, splits[2].first, splits[2].second);
+    model.fit(splits[0].first, splits[0].second, splits[1].first, splits[1].second, splits[2].first, splits[2].second, 50);
     
     std::cout << "\n\n";
     
@@ -313,3 +306,13 @@ void print28x28(const double* arr) {
    
     return 0;
 } */
+
+
+
+/*std::cout << "Digit vector (784 values):" << std::endl;
+for (size_t i = 0; i < digitVector.size(); i++)
+{
+    std::cout << digitVector[i] << " ";
+    if ((i + 1) % 28 == 0)
+        std::cout << std::endl;
+}*/

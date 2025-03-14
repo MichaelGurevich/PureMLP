@@ -27,6 +27,8 @@ private:
 	static double softmax(double x, double* z_o_i, unsigned int size);
 	
 
+	
+
 	static double mseLoss(const Matrix& targets, const Matrix& predicts);
 	static int correctPredictions(const Matrix& targets, const Matrix& predicts);
 

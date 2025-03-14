@@ -1,1 +1,1 @@
-Train MSE: 0.00375903 | Train accuracy: 97.6853 | Valid accuracy: 96.0938
+Train MSE: 0.00192378 | Train accuracy: 98.9095 | Valid accuracy: 97.0898

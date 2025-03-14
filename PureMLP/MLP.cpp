@@ -92,6 +92,8 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 
 
 	Matrix delta_out = d_a_o__d_z_o & d_loss__d_a_o; // [ n examples x n output ]
+	//d_loss__d_a_o.printMat();
+	//d_a_o__d_z_o.printMat();
 
 
 	Matrix d_loss__d_w_o = Matrix::transpose(delta_out) * d_z_o__d_w_o;
@@ -111,13 +113,18 @@ std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 	 
 	Matrix d_z_o__d_a_h = w_o; // [ n output x n hidden ] - 
 
-	Matrix d_loss__d_a_h = delta_out * d_z_o__d_a_h; // [ n examples x n hidden ] -
-
-
-
+	Matrix d_loss__d_a_h = delta_out * d_z_o__d_a_h; // [ n examples x n hidden ] 
 	Matrix d_loss__d_w_h = Matrix::transpose((d_loss__d_a_h & d_a_h__d_z_h)) * d_z_h__d_w_h;
 	Matrix d_loss__d_b_h = Matrix::reduce(d_loss__d_a_h & d_a_h__d_z_h, 0, '+');
+
+	// detlta new  = (delta_out * d_z_o__d_a_h) & d_a_h__d_z_h
+	// delta_new = d_loss__d_a_h & d_a_h__d_z_h
+	// Matrix d_z_h2__d_a_h1 = w_h2;
+	// Matrix d_a_h1__d_z_h1 = Matrix::applyFunc(a_h1, [](double x) {return x > 0 ? 1 : 0; });;
+	// Matrix d_z_h1__d_w_h1 = w_h1;
+	// Matrix d_loss__d_w_h1 = transpose((delta_new * d_z_h2__d_a_h1) & d_a_h1__d_z_h1) * d_z_h1__d_w_h1
 	
+
 
 	return {
 		d_loss__d_w_o,

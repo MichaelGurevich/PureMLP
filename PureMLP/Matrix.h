@@ -14,6 +14,10 @@ private:
 	unsigned int columns;
 	double** matrix;
 
+	enum eRDUCE_AXIS { ALONG_Y, ALONG_X };
+
+	
+
 	static constexpr double addtion(double a, double b) { return a + b; }
 	static constexpr double subraction(double a, double b) { return a - b; }
 	static constexpr double multiplication(double a, double b) { return a * b; }
@@ -31,7 +35,7 @@ private:
 	void linearOperation(const Matrix& mat, std::function<double(double, double)> op);
 	void applyScalarOperation(double scalar, std::function<double(double, double)> op);
 
-	static Matrix reduceHelper(const Matrix& mat, int axis, std::function<double(double, double)> op);
+	static Matrix reduceHelper(const Matrix& mat, int axis, std::function<void(double&, const double)> op);
 	
 
 public:
@@ -74,6 +78,7 @@ public:
 
 		this->matrix = newMatrix;
 	}
+
 
 
 	Matrix(Matrix&& mat) noexcept; // move c'tor
@@ -153,5 +158,9 @@ public:
 	void printSize() const { std::cout << rows << " x " << columns << std::endl; }
 
 	static Matrix slice(int start, int end, const Matrix& mat);
+
+
+
+	
 
 };

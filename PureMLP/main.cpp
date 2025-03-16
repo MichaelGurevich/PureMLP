@@ -54,7 +54,7 @@ sf::Texture createBrushTexture(unsigned int diameter)
 
 int main()
 {
-    MLP model(784, 50, 10, true);
+    MLP model(784, 50, 50, 10, true);
     model.initFromFile();
 
     // Canvas and window dimensions
@@ -127,7 +127,7 @@ int main()
     }
 
     // Create a brush texture with a hard center.
-    const unsigned int brushDiameter = 60; // increased brush size for thicker strokes
+    const unsigned int brushDiameter = 56; // increased brush size for thicker strokes
     sf::Texture brushTexture = createBrushTexture(brushDiameter);
     sf::Sprite brushSprite(brushTexture);
     // Center the brush sprite on its texture.
@@ -284,7 +284,7 @@ void print28x28(const double* arr) {
 
     initSeed();
 
-    MLP model(784, 70, 10, false);
+    MLP model(784, 50, 50, 10, false);
     //model.initFromFile();
 
     
@@ -296,7 +296,7 @@ void print28x28(const double* arr) {
     
 
     std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(64832,  5120, 0);
-    //std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(100,  100, 100);
+    //std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(128,  128, 100);
 
     model.fit(splits[0].first, splits[0].second, splits[1].first, splits[1].second, splits[2].first, splits[2].second, 50);
     

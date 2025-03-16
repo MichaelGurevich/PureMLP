@@ -17,8 +17,17 @@ MLP::MLP(int numFeatures, int numHidden, int numClasses, bool filesInit)
 		w_h - numHiddem x numFeatures
 		b_h - 1 x numHidden
 	*/
-		w_h = Matrix(numHidden, numFeatures, true);
-		b_h = Matrix(1, numHidden, false);
+		w_h1 = Matrix(numHidden, numFeatures, true);
+		b_h1 = Matrix(1, numHidden, false);
+
+		/*
+		w_h2 = Matrix(numHidden2, numHidden1, true);
+		b_h2 = Matrix(numHidden2, numHidden1);
+
+		w_o = Matrix(numClasses, numHidden2, true);
+		b_o = Matrix(1, numClasses, false);
+		*/
+
 
 
 		w_o = Matrix(numClasses, numHidden, true);
@@ -32,26 +41,46 @@ MLP::MLP(int numFeatures, int numHidden, int numClasses, bool filesInit)
 }
 
 
-std::array<Matrix, 2> MLP::forward(const Matrix& X) const
+MLP::MLP(int numFeatures, int numHidden1, int numHidden2, int numClasses, bool filesInit)
+	: numFeatures(numFeatures), numHidden1(numHidden1), numHidden2(numHidden2), numClasses(numClasses)
 {
+	if (!filesInit)
+	{
+		// 1st hidden layer
+		w_h1 = Matrix(numHidden1, numFeatures, true);
+		b_h1 = Matrix(1, numHidden1, false);
 
-	// X [ num examples x 784 ]
-	// W_H [ Num hidden x 784 ]
-	// X * W_H [num Examples x num hidden ] 
-	// b_h [1 x num hidden]
+		// 2nd hidden layer
+		w_h2 = Matrix(numHidden2, numHidden1, true);
+		b_h2 = Matrix(1, numHidden2, false);
+		
+		// output layer
+		w_o = Matrix(numClasses, numHidden2, true);
+		b_o = Matrix(1, numClasses, false);
+
+	}
+	else
+	{
+		this->initFromFile();
+	}
+}
 
 
-	Matrix z_h = X * Matrix::transpose(w_h) + b_h;
-	//Matrix a_h = Matrix::applyFunc(z_h, sigmoid);
-	Matrix a_h = Matrix::applyFunc(z_h, [](double x) {return x > 0 ? x : 0; });
+std::array<Matrix, 3> MLP::forward(const Matrix& X) const
+{
+	// 1st hidden layer
+	Matrix z_h1 = X * Matrix::transpose(w_h1) + b_h1;
+	Matrix a_h1 = Matrix::applyFunc(z_h1, [](double x) {return x > 0 ? x : 0; });
+	
+	// 2nd hidden layer
+	Matrix z_h2 = a_h1 * Matrix::transpose(w_h2) + b_h2;
+	Matrix a_h2 = Matrix::applyFunc(z_h2, [](double x) {return x > 0 ? x : 0; });
 
-
-	Matrix z_o = a_h * Matrix::transpose(w_o) + b_o;
+	// output layer
+	Matrix z_o = a_h2 * Matrix::transpose(w_o) + b_o;
 	Matrix a_o = z_o;
-	//Matrix a_o = Matrix::applyFunc(z_o, sigmoid);
 
-
-
+	// softmax TODO:change to function
 	for (int i = 0; i < z_o.getRows(); ++i)
 	{
 		double denominator = 0;
@@ -67,70 +96,65 @@ std::array<Matrix, 2> MLP::forward(const Matrix& X) const
 	}
 	
 
-	return { a_h, a_o };
+	return { a_h1, a_h2, a_o };
 }
 
 
 
 
-std::array<Matrix, 4> MLP::backward(const Matrix& X, const Matrix& y, const Matrix& a_h, const Matrix& a_o)
+std::array<Matrix, 6> MLP::backward(const Matrix& X, const Matrix& y, const Matrix& a_h1, const Matrix& a_h2, const Matrix& a_o)
 {
-
-
-
-	//double acc = calcAcc(y, predictedLabels(a_o));
-	//std::cout << "Acc: " << acc << "%" << std::endl;
 
 	// Encode labels into one hot
 	Matrix y_onehot = DataLoader::labelsToOneHot(y);
 	
 	
 	//  output layer 
-	Matrix d_z_o__d_w_o = a_h;
+
+	Matrix d_z_o__d_w_o = a_h2;
 	Matrix d_a_o__d_z_o = a_o & (1 - a_o);
 	Matrix d_loss__d_a_o = 2 * (a_o - y_onehot) / y_onehot.getColumns();
-
-
-	Matrix delta_out = d_a_o__d_z_o & d_loss__d_a_o; // [ n examples x n output ]
-	//d_loss__d_a_o.printMat();
-	//d_a_o__d_z_o.printMat();
-
+	Matrix delta_out = d_loss__d_a_o & d_a_o__d_z_o; // [ n examples x n output ]
 
 	Matrix d_loss__d_w_o = Matrix::transpose(delta_out) * d_z_o__d_w_o;
-
 	Matrix d_loss__d_b_o = Matrix::reduce(delta_out, 0, '+');
 
 	
 
-
-	// hidden layer
-	// d_loss__d_w_h = d_z_h__d_w_h * d_a_h__d_z_h * d_z_o__d_a_o * delata out 
+	// hidden 2 layer
 	
-	Matrix d_z_h__d_w_h = X; // [ n examples x features ]
+	Matrix d_z_h2__d_w_h2 = a_h1;
+	Matrix d_z_o__d_a_h2 = w_o; 
+	Matrix d_a_h2__d_z_h2 = Matrix::applyFunc(a_h2, [](double x) {return x > 0 ? 1 : 0; }); // ReLU derivative
+	Matrix d_loss__d_a_h2 = delta_out * d_z_o__d_a_h2;
 
-	//Matrix d_a_h__d_z_h = a_h & (1 - a_h); // [ n examples x n hidden ] -
-	Matrix d_a_h__d_z_h = Matrix::applyFunc(a_h, [](double x) {return x > 0 ? 1 : 0; }); // ReLU derivative
-	 
-	Matrix d_z_o__d_a_h = w_o; // [ n output x n hidden ] - 
+	Matrix d_loss__d_w_h2 = Matrix::transpose((d_loss__d_a_h2 & d_a_h2__d_z_h2)) * d_z_h2__d_w_h2;
+	Matrix d_loss__d_b_h2 = Matrix::reduce(d_loss__d_a_h2 & d_a_h2__d_z_h2, 0, '+');
 
-	Matrix d_loss__d_a_h = delta_out * d_z_o__d_a_h; // [ n examples x n hidden ] 
-	Matrix d_loss__d_w_h = Matrix::transpose((d_loss__d_a_h & d_a_h__d_z_h)) * d_z_h__d_w_h;
-	Matrix d_loss__d_b_h = Matrix::reduce(d_loss__d_a_h & d_a_h__d_z_h, 0, '+');
 
-	// detlta new  = (delta_out * d_z_o__d_a_h) & d_a_h__d_z_h
-	// delta_new = d_loss__d_a_h & d_a_h__d_z_h
-	// Matrix d_z_h2__d_a_h1 = w_h2;
-	// Matrix d_a_h1__d_z_h1 = Matrix::applyFunc(a_h1, [](double x) {return x > 0 ? 1 : 0; });;
-	// Matrix d_z_h1__d_w_h1 = w_h1;
-	// Matrix d_loss__d_w_h1 = transpose((delta_new * d_z_h2__d_a_h1) & d_a_h1__d_z_h1) * d_z_h1__d_w_h1
+
+	// hidden 1 layer
+	
+	Matrix d_z_h2__d_a_h1 = w_h2;
+	Matrix delta_hidden = (delta_out * d_z_o__d_a_h2) & d_a_h2__d_z_h2;
+	Matrix d_loss__d_a_h1 = delta_hidden * d_z_h2__d_a_h1;
+	Matrix d_a_h1__d_z_h1 = Matrix::applyFunc(a_h1, [](double x) {return x > 0 ? 1 : 0; });
+	Matrix d_z_h1__d_w_h1 = X;
+
+	Matrix d_loss__d_w_h1 = Matrix::transpose(d_loss__d_a_h1 & d_a_h1__d_z_h1) * d_z_h1__d_w_h1;
+	Matrix d_loss__d_b_h1 = Matrix::reduce(d_loss__d_a_h1 & d_a_h1__d_z_h1, 0, '+');
+	
+	
 	
 
 
 	return {
 		d_loss__d_w_o,
 		d_loss__d_b_o,
-		d_loss__d_w_h,
-		d_loss__d_b_h
+		d_loss__d_w_h2,
+		d_loss__d_b_h2,
+		d_loss__d_w_h1,
+		d_loss__d_b_h1
 	};
 
 	
@@ -155,17 +179,19 @@ void MLP::fit(Matrix& X, const Matrix& y,
 		for (pair<Matrix, Matrix>& trainPair : stream)
 		{
 
-			auto [a_h, a_o] = forward(trainPair.first); 
+			auto [a_h1, a_h2, a_o] = forward(trainPair.first); 
 
 			//std::array<Matrix, 2> forwardOuput = forward(trainPair.first);
 		
 
-			auto [d_loss__d_w_o, d_loss__d_b_o, d_loss__d_w_h, d_loss__d_b_h] = 
-				backward(trainPair.first, trainPair.second, a_h, a_o);
+			auto [d_loss__d_w_o, d_loss__d_b_o, d_loss__d_w_h2, d_loss__d_b_h2, d_loss__d_w_h1, d_loss__d_b_h1] =
+				backward(trainPair.first, trainPair.second, a_h1, a_h2, a_o);
 
 
-			w_h = w_h - learningRate * d_loss__d_w_h;
-			b_h = b_h - learningRate * d_loss__d_b_h;
+			w_h1 = w_h1 - learningRate * d_loss__d_w_h1;
+			b_h1 = b_h1 - learningRate * d_loss__d_b_h1;
+			w_h2 = w_h2 - learningRate * d_loss__d_w_h2;
+			b_h2 = b_h2 - learningRate * d_loss__d_b_h2;
 			w_o = w_o - learningRate * d_loss__d_w_o;
 			b_o = b_o - learningRate * d_loss__d_b_o;
 
@@ -240,7 +266,7 @@ std::array<double, 2> MLP::computeMseAndAcc(const MLP& mlp, const Matrix & X, co
 
 	for (pair<Matrix, Matrix>& validationPair: stream)
 	{
-		auto [_, predictions] = mlp.forward(validationPair.first); // get mlps preditions for the given batch
+		auto [_1,_2, predictions] = mlp.forward(validationPair.first); // get mlps preditions for the given batch
 
 		loss = mseLoss(validationPair.second, predictions);
 
@@ -262,18 +288,20 @@ std::array<double, 2> MLP::computeMseAndAcc(const MLP& mlp, const Matrix & X, co
 
 void MLP::writeWeightsBiasToFile()
 {
-	ofstream files[4];
+	ofstream files[6];
 
-	std::array<const Matrix*, 4> matrices = { &w_h, &b_h, &w_o, &b_o };
+	std::array<const Matrix*, 6> matrices = { &w_h1, &b_h1,&w_h2, &b_h2, &w_o, &b_o };
 
-	std::array<std::string, 4> filenames = {
-		"hidden_weights.weights",
-		"hidden_bias.bias",
+	std::array<std::string, 6> filenames = {
+		"hidden1_weights.weights",
+		"hidden1_bias.bias",
+		"hidden2_weights.weights",
+		"hidden2_bias.bias",
 		"output_weights.weights",
 		"output_bias.bias",
 	};
 	
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < filenames.size(); ++i)
 	{
 		files[i].open(filenames[i]);
 
@@ -288,18 +316,20 @@ void MLP::writeWeightsBiasToFile()
 
 void MLP::initFromFile()
 {
-	std::ifstream files[4];
+	std::ifstream files[6];
 
-	std::array<Matrix*, 4> matrices = { &w_h, &b_h, &w_o, &b_o };
+	std::array<Matrix*, 6> matrices = { &w_h1, &b_h1,&w_h2, &b_h2, &w_o, &b_o };
 
-	std::array<std::string, 4> filenames = {
-		"hidden_weights.weights",
-		"hidden_bias.bias",
+	std::array<std::string, 6> filenames = {
+		"hidden1_weights.weights",
+		"hidden1_bias.bias",
+		"hidden2_weights.weights",
+		"hidden2_bias.bias",
 		"output_weights.weights",
 		"output_bias.bias",
 	};
 
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < filenames.size(); ++i)
 	{
 		files[i].open(filenames[i]);
 
@@ -319,8 +349,9 @@ int MLP::predict(std::vector<int> examp) const
 
 	input = ((input / 255) - 0.5) * 2;
 
-	auto [_, a_o] = forward(input);
+	auto [_1, _2, a_o] = forward(input);
 	
+
 	return maxIndex(a_o[0], 10);
 }
 

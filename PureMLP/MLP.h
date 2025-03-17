@@ -30,8 +30,8 @@ private:
 	static double sigmoid(double x) { return std::pow(e, x) / (1 + std::pow(e,x)); }
 
 	static double ReLU(double x) { return std::max(0.0, x); }
-	static double softmax(double x, double* z_o_i, unsigned int size);
-	
+	static Matrix softmax(const Matrix& mat);
+	static double calcDenominator(const double* arr, int size);
 
 	
 

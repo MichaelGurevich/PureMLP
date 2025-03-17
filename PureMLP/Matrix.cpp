@@ -3,6 +3,7 @@
 #include "utils.h"
 #include <iomanip>
 #include <string>
+#include "MatrixException.h"
 
 
 /*
@@ -23,7 +24,7 @@ Matrix::Matrix(unsigned int rows, unsigned int cols, bool initRandom) : rows(row
 	} 
 	else if ( rows == 0 or cols == 0) // illegal input
 	{
-		throw - 1;
+		throw InvalidDimensionException("Matrix dimensions must be greater than zero.");
 	}
 	else
 	{
@@ -158,7 +159,7 @@ Matrix& Matrix::operator+=(double scalar)
 
 Matrix& Matrix::operator+=(const Matrix& mat)
 {
-	this->linearOperation(mat, Matrix::addtion);
+	this->zipWith(mat, Matrix::addtion);
 	return *this;
 }
 
@@ -195,7 +196,7 @@ Matrix& Matrix::operator-=(double scalar)
 
 Matrix& Matrix::operator-=(const Matrix& mat)
 {
-	this->linearOperation(mat, Matrix::subraction);
+	this->zipWith(mat, Matrix::subraction);
 	return *this;
 }
 
@@ -291,9 +292,8 @@ Matrix operator*(const Matrix& mat1, const Matrix& mat2)
 		return Matrix(matMulRows, matMulCols, matMul);
 	} 
 
-	// TODO:
-		// Handle exception
-	throw - 1;
+	throw  DimensionMismatchException("Matrix multiplication dimension mismatch: "
+		"Number of columns of the first matrix must equal number of rows of the second.");
 }
 
 Matrix& Matrix::operator*=(const Matrix& mat)
@@ -324,9 +324,8 @@ Matrix& Matrix::operator*=(const Matrix& mat)
 		return *this;
 	}
 
-	// TODO:
-		// Handle exception
-	throw - 1;
+	throw  DimensionMismatchException("Matrix multiplication dimension mismatch: "
+		"Number of columns of the first matrix must equal number of rows of the second.");
 }
 
 Matrix& Matrix::operator*=(double scalar)
@@ -362,7 +361,7 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 		
 
 		int cnt = 0;
-		while (std::getline(in, row) and cnt < 5000)
+		while (std::getline(in, row))
 		{
 			cnt++;
 			std::stringstream ss(row);
@@ -394,7 +393,6 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 			while (ss >> num)
 			{
 			
-
 				if (columnSize != 0)
 				{
 					matFromFile[rowsLogicalSize][colLogicalSize++] = num;
@@ -427,7 +425,6 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 
 }
 
-// 
 std::ostream& operator<<(std::ostream& os, const Matrix& mat)
 {
 	for (int i = 0; i < mat.rows; ++i)
@@ -507,7 +504,7 @@ Matrix Matrix::applyScalarOperation(const Matrix& mat, double scalar, std::funct
  * @throws Exception if matrices have incompatible dimensions
  */
 
-Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::function<double(double, double)> op)
+Matrix Matrix::zipWith(const Matrix& mat1, const Matrix& mat2, std::function<double(double, double)> op)
 {
 	double** outputMat = nullptr;
 	int newRows, newCols;
@@ -565,17 +562,15 @@ Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::func
 
 	}
 	else {
-		// TODO:
-			// throw and exception
-		throw - 1;
+		
+		throw DimensionMismatchException("Matrix dimensions do not support element-wise operation or broadcasting.");
 	}
 	return Matrix(newRows, newCols, outputMat);
 }
 
 
-void Matrix::linearOperation(const Matrix& mat, std::function<double(double, double)> op)
+void Matrix::zipWith(const Matrix& mat, std::function<double(double, double)> op)
 {
-	
 	int newRows, newCols;
 	
 	if (this->rows == mat.rows and this->columns == mat.columns) //Matrixes are the same size
@@ -608,9 +603,7 @@ void Matrix::linearOperation(const Matrix& mat, std::function<double(double, dou
 
 	}
 	else {
-		// TODO:
-			// throw and exception
-		throw - 1;
+		throw DimensionMismatchException("Matrix dimensions do not support element-wise operation or broadcasting.");
 	}
 
 }
@@ -684,7 +677,7 @@ Matrix Matrix::reduce(const Matrix& mat, int axis, char op)
 		return reduceHelper(mat, axis, [](double& mult, const double x) {mult *= x; });
 		break;
 	default:
-		throw - 1;
+		throw InvalidReductionOperatorException("Reduction operator not supported.");
 		break;
 	}
 
@@ -726,7 +719,7 @@ Matrix Matrix::reduceHelper(const Matrix& mat, int axis, std::function<void(doub
 		return Matrix(mat.rows, 1, newMat);
 	}
 	else
-		throw - 1;
+		throw InvalidAxisException("Invalid axis specified for reduction.");
 }
 
 

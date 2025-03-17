@@ -3,9 +3,9 @@
 #include "DataLoader.h"
 #include "MLP.h"
 #include <iostream>
+#include "MatrixException.h"
 
-
-/*#include <SFML/Graphics.hpp>
+#include <SFML/Graphics.hpp>
 
 #include <vector>
 #include <cmath>
@@ -54,11 +54,11 @@ sf::Texture createBrushTexture(unsigned int diameter)
 
 int main()
 {
-    MLP model(784, 50, 50, 10, true);
+    MLP model(784, 128, 64, 10, true);
     model.initFromFile();
 
     // Canvas and window dimensions
-    const int canvasSize = 400;           // Drawing area (600x600)
+    const int canvasSize = 500;           // Drawing area (600x600)
     const int buttonAreaHeight = 50;      // Extra area for buttons
     const int windowWidth = canvasSize;
     const int windowHeight = canvasSize + buttonAreaHeight;
@@ -261,7 +261,7 @@ int main()
     }
 
     return 0;
-}*/
+}
 
 
 /*void print28x28(const double* arr);
@@ -279,12 +279,12 @@ void print28x28(const double* arr) {
 */
 
 
-int main() {
+/*int main() {
    
 
     initSeed();
 
-    MLP model(784, 50, 50, 10, false);
+    MLP model(784, 128, 64, 10, false);
     //model.initFromFile();
 
     
@@ -292,20 +292,20 @@ int main() {
 
     DataLoader dl("mnist_data.txt", "mnist_labels.txt");
     std::cout << "Finished reading data!" << "\n";
-    //print28x28(dl.getData()[0]);
+ 
     
 
     std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(64832,  5120, 0);
     //std::vector<pair<Matrix, Matrix>> splits = dl.trainValidTestSplit(128,  128, 100);
 
-    model.fit(splits[0].first, splits[0].second, splits[1].first, splits[1].second, splits[2].first, splits[2].second, 50);
+    model.fit(splits[0].first, splits[0].second, splits[1].first, splits[1].second, splits[2].first, splits[2].second, 30, 0.01);
     
     std::cout << "\n\n";
     
     
    
     return 0;
-} 
+} */
 
 
 

@@ -44,5 +44,8 @@
     <ClInclude Include="DataLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MatrixException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

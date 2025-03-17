@@ -78,23 +78,7 @@ std::array<Matrix, 3> MLP::forward(const Matrix& X) const
 
 	// output layer
 	Matrix z_o = a_h2 * Matrix::transpose(w_o) + b_o;
-	Matrix a_o = z_o;
-
-	// softmax TODO:change to function
-	for (int i = 0; i < z_o.getRows(); ++i)
-	{
-		double denominator = 0;
-		for (int j = 0; j < z_o.getColumns(); ++j)
-		{
-			denominator += std::pow(e, z_o[i][j]);
-		}
-
-		for (int k = 0; k < z_o.getColumns(); ++k)
-		{
-			a_o.getMatrix()[i][k] = std::pow(e, z_o[i][k]) / denominator;
-		}
-	}
-	
+	Matrix a_o = softmax(z_o);	
 
 	return { a_h1, a_h2, a_o };
 }
@@ -355,13 +339,34 @@ int MLP::predict(std::vector<int> examp) const
 	return maxIndex(a_o[0], 10);
 }
 
-
-double MLP::softmax(double x, double* z_o_i, unsigned int size)
+double MLP::calcDenominator(const double* arr, int size)
 {
 	double denominator = 0;
 
 	for (int i = 0; i < size; ++i)
-		denominator += std::pow(e, z_o_i[i]);
+		denominator += std::pow(e, arr[i]);
+	
+	return denominator;
+}
 
-	return std::pow(e, x) / denominator;
+
+Matrix MLP::softmax(const Matrix& mat)
+{
+	int rows = mat.getRows();
+	int cols = mat.getColumns();
+	double** matMatrix = mat.getMatrix();
+	
+	double denominator;
+
+	double** softmaxMat = new double*[rows];
+	for (int i = 0; i < mat.getRows(); ++i)
+	{
+		softmaxMat[i] = new double[cols];
+		denominator = calcDenominator(matMatrix[i], cols);
+
+		for (int j = 0; j < cols; ++j)
+			softmaxMat[i][j] = std::pow(e, matMatrix[i][j]) / denominator;
+	}
+
+	return Matrix(rows, cols, softmaxMat);
 }

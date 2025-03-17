@@ -17,7 +17,6 @@ private:
 	enum eRDUCE_AXIS { ALONG_Y, ALONG_X };
 
 	
-
 	static constexpr double addtion(double a, double b) { return a + b; }
 	static constexpr double subraction(double a, double b) { return a - b; }
 	static constexpr double multiplication(double a, double b) { return a * b; }

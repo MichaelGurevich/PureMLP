@@ -79,6 +79,9 @@ Matrix::Matrix(const Matrix& mat) : rows(mat.rows), columns(mat.columns)
 	this->matrix = copiedMat;
 }
 
+
+
+// Move c'tor
 Matrix::Matrix(Matrix&& mat) noexcept
 	:matrix(nullptr), rows(0), columns(0) // 
 {
@@ -136,7 +139,12 @@ Matrix Matrix::transpose(const Matrix& mat)
 }
 
 
-// ==================== Operators ====================
+
+/*
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////////// Operators /////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+*/
 
 
 	// Operator +
@@ -352,10 +360,9 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 		
 		double** matFromFile = new double* [rowsPhysicalSize];
 		
-		//int ROW_CNT = 0; // TODO: delete
 
 		int cnt = 0;
-		while (std::getline(in, row))
+		while (std::getline(in, row) and cnt < 5000)
 		{
 			cnt++;
 			std::stringstream ss(row);
@@ -365,10 +372,8 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 			{
 				rowsPhysicalSize *= 2;
 				double** newMatSize = new double* [rowsPhysicalSize];
-				for (int i = 0; i < rowsLogicalSize; ++i)
-				{
-					newMatSize[i] = matFromFile[i];
-				}
+
+				std::memcpy(newMatSize, matFromFile, rowsLogicalSize * sizeof(double*));
 				delete[]matFromFile;
 				matFromFile = newMatSize;
 			}
@@ -400,16 +405,11 @@ std::istream& operator>>(std::istream& in, Matrix& mat)
 					{
 						colPhysicalSize *= 2;
 						double* newColSize = new double[colPhysicalSize];
+						std::memcpy(newColSize, matFromFile[rowsLogicalSize], colLogicalSize * sizeof(double*));
 
-						for (int i = 0; i < colLogicalSize; ++i)
-						{
-							newColSize[i] = matFromFile[rowsLogicalSize][i];
-						}
 						delete [] matFromFile[rowsLogicalSize];
 						matFromFile[rowsLogicalSize] = newColSize;
 					}
-
-					
 					matFromFile[rowsLogicalSize][colLogicalSize++] = num;
 					
 				}
@@ -443,7 +443,11 @@ std::ostream& operator<<(std::ostream& os, const Matrix& mat)
 }
 
 
-// ==================== End of Operators ====================
+/*
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////////// End of Operators //////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+*/
 
 void Matrix::printMat() const
 {
@@ -492,15 +496,17 @@ Matrix Matrix::applyScalarOperation(const Matrix& mat, double scalar, std::funct
 }
 
 
-/*
-For use in operation +/- between to matrices
-	Receives: reference to matrices
+/**
+ * Applies a binary operation element-wise between two matrices.
+ * Supports broadcasting of row and column vectors.
+ *
+ * @param mat1 First matrix operand
+ * @param mat2 Second matrix operand
+ * @param op Binary operation to apply between corresponding elements
+ * @return A new matrix containing the results of the operation
+ * @throws Exception if matrices have incompatible dimensions
+ */
 
-	Returns: new matrix which is the sum/subtraction
-
-	If matrices are equal in size then adds element wise
-	If matrix and vector (n x 1 / 1 x n) is recieved -> broadcasts the vector thru the matrix columns/rows
-*/
 Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::function<double(double, double)> op)
 {
 	double** outputMat = nullptr;
@@ -563,8 +569,6 @@ Matrix Matrix::linearOperation(const Matrix& mat1, const Matrix& mat2, std::func
 			// throw and exception
 		throw - 1;
 	}
-	//Matrix m(newRows, newCols, outputMat);
-	//m.printMat();
 	return Matrix(newRows, newCols, outputMat);
 }
 

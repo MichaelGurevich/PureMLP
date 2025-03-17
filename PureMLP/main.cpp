@@ -5,7 +5,7 @@
 #include <iostream>
 
 
-#include <SFML/Graphics.hpp>
+/*#include <SFML/Graphics.hpp>
 
 #include <vector>
 #include <cmath>
@@ -261,7 +261,7 @@ int main()
     }
 
     return 0;
-}
+}*/
 
 
 /*void print28x28(const double* arr);
@@ -279,7 +279,7 @@ void print28x28(const double* arr) {
 */
 
 
-/*int main() {
+int main() {
    
 
     initSeed();
@@ -305,7 +305,7 @@ void print28x28(const double* arr) {
     
    
     return 0;
-} */
+} 
 
 
 

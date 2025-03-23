@@ -4,8 +4,14 @@ This project features a fully custom implementation of a Neural Network built en
 
 Project Highlights
 
-Pure C++ Implementation: No external ML libraries; all components (layers, neurons, activations, training, and inference) coded from scratch.
+Pure C++ Implementation: No external ML libraries; 
+all components (layers, neurons, activations, training, and inference) coded from scratch.
 
-Handwritten Digit Classification: Trained and evaluated on the MNIST dataset, achieving high accuracy.
+Handwritten Digit Classification: 
+Trained and evaluated on the MNIST dataset, achieving high accuracy.
 
-Interactive GUI Application: Includes an intuitive user interface allowing users to draw digits and receive instant predictions from the neural network.
+Interactive GUI Application: 
+Includes an intuitive user interface allowing users to draw digits and receive instant predictions from the neural network.
+
+Distinctive feature:
+3 layers support 2 hidden and 1 output.

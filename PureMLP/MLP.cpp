@@ -2,45 +2,8 @@
 #include "DataLoader.h"
 #include "utils.h"
 
-/*
-c'tor
-initialized weights and bais to random numbers according to the parmeters recived
-*/
-MLP::MLP(int numFeatures, int numHidden, int numClasses, bool filesInit)
-	: numFeatures(numFeatures), numHidden(numHidden), numClasses(numClasses) 
-{
-	
-	if (!filesInit)
-	{
-		/*
-	Hidden layer - initialize weight and bais
-		w_h - numHiddem x numFeatures
-		b_h - 1 x numHidden
-	*/
-		w_h1 = Matrix(numHidden, numFeatures, true);
-		b_h1 = Matrix(1, numHidden, false);
 
-		/*
-		w_h2 = Matrix(numHidden2, numHidden1, true);
-		b_h2 = Matrix(numHidden2, numHidden1);
-
-		w_o = Matrix(numClasses, numHidden2, true);
-		b_o = Matrix(1, numClasses, false);
-		*/
-
-
-
-		w_o = Matrix(numClasses, numHidden, true);
-		b_o = Matrix(1, numClasses, false);
-	}
-	else
-	{
-		this->initFromFile();
-	}
-	
-}
-
-
+// c'tor
 MLP::MLP(int numFeatures, int numHidden1, int numHidden2, int numClasses, bool filesInit)
 	: numFeatures(numFeatures), numHidden1(numHidden1), numHidden2(numHidden2), numClasses(numClasses)
 {

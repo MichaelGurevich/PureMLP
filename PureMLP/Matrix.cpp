@@ -543,24 +543,24 @@ Matrix Matrix::zipWith(const Matrix& mat1, const Matrix& mat2, std::function<dou
 		}
 
 	}
-	else if ((mat1.columns == 1 or mat2.columns == 1) and mat1.rows == mat2.rows) // matrix and column vector -> broadcast the vector
-	{
+        else if ((mat1.columns == 1 or mat2.columns == 1) and mat1.rows == mat2.rows) // matrix and column vector -> broadcast the vector
+        {
 
-		newCols = mat1.columns == 1 ? mat2.columns : mat1.columns;
-		newRows = mat1.rows;
+                newCols = mat1.columns == 1 ? mat2.columns : mat1.columns;
+                newRows = mat1.rows;
 
-		double** columnVector = mat1.columns == 1 ? mat1.getMatrix() : mat2.getMatrix();
-		double** matrix = mat1.columns == 1 ? mat2.getMatrix() : mat1.getMatrix();
+                double** columnVector = mat1.columns == 1 ? mat1.getMatrix() : mat2.getMatrix();
+                double** matrix = mat1.columns == 1 ? mat2.getMatrix() : mat1.getMatrix();
 
-		outputMat = new double* [newRows];
-		for (int i = 0; i < newCols; ++i)
-		{
-			outputMat[i] = new double[newCols];
-			for (int j = 0; j < newRows; ++j)
-				outputMat[i][j] = op(matrix[j][i], columnVector[j][0]);
-		}
+                outputMat = new double* [newRows];
+                for (int i = 0; i < newRows; ++i)
+                {
+                        outputMat[i] = new double[newCols];
+                        for (int j = 0; j < newCols; ++j)
+                                outputMat[i][j] = op(matrix[i][j], columnVector[i][0]);
+                }
 
-	}
+        }
 	else {
 		
 		throw DimensionMismatchException("Matrix dimensions do not support element-wise operation or broadcasting.");
@@ -593,15 +593,15 @@ void Matrix::zipWith(const Matrix& mat, std::function<double(double, double)> op
 		}
 
 	}
-	else if (mat.columns == 1 and this->rows == mat.rows) // matrix and column vector -> broadcast the vector
-	{
-		for (int i = 0; i < this->columns; ++i)
-		{
-			for (int j = 0; j < this->rows; ++j)
-				this->matrix[i][j] = op(this->matrix[j][i], mat.matrix[j][0]);
-		}
+        else if (mat.columns == 1 and this->rows == mat.rows) // matrix and column vector -> broadcast the vector
+        {
+                for (int i = 0; i < this->rows; ++i)
+                {
+                        for (int j = 0; j < this->columns; ++j)
+                                this->matrix[i][j] = op(this->matrix[i][j], mat.matrix[i][0]);
+                }
 
-	}
+        }
 	else {
 		throw DimensionMismatchException("Matrix dimensions do not support element-wise operation or broadcasting.");
 	}

@@ -1,14 +1,15 @@
 #include "utils.h"
 #include "DataLoader.h"
 #include "MLP.h"
+#include "MatrixException.h"
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <cstdio>
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <filesystem>
 
 struct LogInfo {
     double mse;
@@ -24,11 +25,51 @@ static LogInfo readLog()
     {
         std::string line;
         std::getline(file,line);
-        std::sscanf(line.c_str(),
-            "Train MSE: %lf | Train accuracy: %lf | Valid accuracy: %lf",
-            &info.mse,&info.trainAcc,&info.validAcc);
+        std::istringstream iss(line);
+        std::string trainLabel;
+        std::string mseLabel;
+        std::string trainAccuracyLabel;
+        std::string validLabel;
+        std::string validAccuracyLabel;
+        char separator1 = '\0';
+        char separator2 = '\0';
+
+        if(!(iss >> trainLabel >> mseLabel >> info.mse
+                 >> separator1 >> trainLabel >> trainAccuracyLabel >> info.trainAcc
+                 >> separator2 >> validLabel >> validAccuracyLabel >> info.validAcc)
+           || separator1 != '|' || separator2 != '|')
+        {
+            info = LogInfo{0.0,0.0,0.0};
+        }
     }
     return info;
+}
+
+static void setupWorkingDirectory()
+{
+    namespace fs = std::filesystem;
+
+    const fs::path current = fs::current_path();
+    const fs::path requiredAsset = "arial.ttf";
+
+    if(fs::exists(current / requiredAsset))
+        return;
+
+    const std::vector<fs::path> candidates = {
+        current / "PureMLP",
+        current.parent_path(),
+        current.parent_path().parent_path(),
+        current.parent_path().parent_path() / "PureMLP"
+    };
+
+    for(const fs::path& candidate : candidates)
+    {
+        if(!candidate.empty() && fs::exists(candidate / requiredAsset))
+        {
+            fs::current_path(candidate);
+            return;
+        }
+    }
 }
 
 static bool confirmTraining(const sf::Font& font)
@@ -155,7 +196,6 @@ static sf::Texture createBrushTexture(unsigned int diameter)
 static void runDrawingMode()
 {
     MLP model(784,128,64,10,true);
-    model.initFromFile();
 
     const int canvasSize = 500;
     const int buttonAreaHeight = 50;
@@ -242,12 +282,14 @@ static void runDrawingMode()
                 }
                 else
                 {
-                    if(clearButton.getGlobalBounds().contains(mouseX, mouseY))
+                    sf::Vector2f mousePoint(static_cast<float>(mouseX),
+                                            static_cast<float>(mouseY));
+                    if(clearButton.getGlobalBounds().contains(mousePoint))
                     {
                         canvasTexture.clear(sf::Color::Black);
                         canvasTexture.display();
                     }
-                    else if(doneButton.getGlobalBounds().contains(mouseX, mouseY))
+                    else if(doneButton.getGlobalBounds().contains(mousePoint))
                     {
                         sf::RenderTexture scaledTexture;
                         if(!scaledTexture.create(28,28))
@@ -290,8 +332,8 @@ static void runDrawingMode()
                 }
                 else
                 {
-                    float dx = mousePos.x - lastPos.x;
-                    float dy = mousePos.y - lastPos.y;
+                    float dx = static_cast<float>(mousePos.x - lastPos.x);
+                    float dy = static_cast<float>(mousePos.y - lastPos.y);
                     float distance = std::sqrt(dx*dx + dy*dy);
                     int steps = std::max(1, static_cast<int>(distance/(brushDiameter/4.f)));
                     for(int i=0;i<=steps;i++)
@@ -388,7 +430,9 @@ static void runMainMenu()
                 {
                     int mx = event.mouseButton.x;
                     int my = event.mouseButton.y;
-                    if(trainBtn.getGlobalBounds().contains(mx,my))
+                    sf::Vector2f mousePoint(static_cast<float>(mx),
+                                            static_cast<float>(my));
+                    if(trainBtn.getGlobalBounds().contains(mousePoint))
                     {
                         if(confirmTraining(font))
                         {
@@ -398,7 +442,7 @@ static void runMainMenu()
                             restartMenu = true;
                         }
                     }
-                    else if(drawBtn.getGlobalBounds().contains(mx,my))
+                    else if(drawBtn.getGlobalBounds().contains(mousePoint))
                     {
                         window.close();
                         runDrawingMode();
@@ -426,6 +470,7 @@ int main()
 {
     try
     {
+        setupWorkingDirectory();
         runMainMenu();
     }
     catch(const MatrixException& ex)

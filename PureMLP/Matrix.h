@@ -47,12 +47,12 @@ public:
 	template<typename T> 
 	Matrix(std::vector<T> vect)
 	{
-		this->columns = vect.size();
+		this->columns = static_cast<unsigned int>(vect.size());
 
 		double** newMatrix = new double* [1];
 		newMatrix[0] = new double[this->columns];
 
-		for (int i = 0; i < this->columns; ++i)
+		for (unsigned int i = 0; i < this->columns; ++i)
 			newMatrix[0][i] = static_cast<double> (vect[i]);
 		
 		this->rows = 1;

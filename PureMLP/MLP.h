@@ -1,6 +1,5 @@
 #include "Matrix.h"
 #include <array>
-#include <numbers>
 #include <cmath>
 #include <vector>
 

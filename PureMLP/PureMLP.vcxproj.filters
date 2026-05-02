@@ -27,9 +27,6 @@
     <ClCompile Include="DataLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MLP.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="MLP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -45,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MatrixException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MLP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -108,7 +108,8 @@ std::array<Matrix, 6> MLP::backward(const Matrix& X, const Matrix& y, const Matr
 }
 
 void MLP::fit(Matrix& X, const Matrix& y,
-	 Matrix& validX, const Matrix& validY,  Matrix& testX, const Matrix& testY, int numEpochs, double learningRate)
+	 Matrix& validX, const Matrix& validY,  Matrix& testX, const Matrix& testY,
+	 int numEpochs, double learningRate, TrainingProgressCallback onProgress)
 {
 
 	X = ((X / 255) - 0.5) * 2; // Normalize data to [-1, 1]
@@ -162,6 +163,17 @@ void MLP::fit(Matrix& X, const Matrix& y,
 		logMSE = trainMse;
 		logTrainAcc = trainAcc;
 		logValidAcc = validAcc;
+
+		if (onProgress)
+		{
+			onProgress(TrainingProgress{
+				i + 1,
+				numEpochs,
+				trainMse,
+				trainAcc,
+				validAcc
+			});
+		}
 	}
 
 	
@@ -290,16 +302,26 @@ void MLP::initFromFile()
 }
 
 
-int MLP::predict(std::vector<int> examp) const
+int MLP::predict(const std::vector<int>& examp) const
+{
+	std::array<double, 10> probabilities = predictProba(examp);
+	return maxIndex(probabilities.data(), 10);
+}
+
+std::array<double, 10> MLP::predictProba(const std::vector<int>& examp) const
 {
 	Matrix input(examp);
 
 	input = ((input / 255) - 0.5) * 2;
 
 	auto [_1, _2, a_o] = forward(input);
-	
 
-	return maxIndex(a_o[0], 10);
+	std::array<double, 10> probabilities{};
+	const double* output = a_o[0];
+	for (int i = 0; i < 10; ++i)
+		probabilities[i] = output[i];
+
+	return probabilities;
 }
 
 double MLP::calcDenominator(const double* arr, int size)

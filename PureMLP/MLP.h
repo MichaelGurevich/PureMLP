@@ -1,6 +1,7 @@
 #include "Matrix.h"
 #include <array>
 #include <cmath>
+#include <functional>
 #include <vector>
 
 #include <iostream>
@@ -9,6 +10,18 @@
 
 class MLP
 {
+public:
+	struct TrainingProgress
+	{
+		int epoch;
+		int totalEpochs;
+		double trainMse;
+		double trainAcc;
+		double validAcc;
+	};
+
+	using TrainingProgressCallback = std::function<void(const TrainingProgress&)>;
+
 private:
 	int numFeatures;
 	int numHidden;
@@ -47,7 +60,8 @@ public:
 	void writeWeightsBiasToFile();
 	void initFromFile();
 
-	int predict(std::vector<int> examp) const;
+	int predict(const std::vector<int>& examp) const;
+	std::array<double, 10> predictProba(const std::vector<int>& examp) const;
 
 
 	std::array<Matrix, 3> forward(const Matrix& X) const;
@@ -55,7 +69,9 @@ public:
 	std::array<Matrix, 6> backward(const Matrix& X, const Matrix& y, const Matrix& a_h1, const Matrix& a_h2, const Matrix& a_o);
 
 	void fit(Matrix& X, const Matrix& y,
-		 Matrix& validX, const Matrix& validY,  Matrix& testX, const Matrix& testY, int numEpochs=30, double learningRate=0.01);
+		 Matrix& validX, const Matrix& validY,  Matrix& testX, const Matrix& testY,
+		 int numEpochs=30, double learningRate=0.01,
+		 TrainingProgressCallback onProgress=nullptr);
 
 
 };
